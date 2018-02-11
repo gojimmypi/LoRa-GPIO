@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2027
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LoRa-GPIO", "LoRa-GPIO.vcxproj", "{C5F80730-F44F-4478-BDAE-6634EFC2CA88}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Console", "Console\Console.vcxproj", "{B73AD803-C0EB-4758-8ECC-920080E785D9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Device", "Device\Device.vcxproj", "{D2D52896-A927-4649-A936-9612BEFEC02E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "M5StackConsole", "M5StackConsole\M5StackConsole.vcxproj", "{5D976B3D-7B4C-4EC4-AC9E-3A7E315B0459}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|x86.ActiveCfg = Debug|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|x86.Build.0 = Debug|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.ActiveCfg = Release|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.Build.0 = Release|Win32
+		{B73AD803-C0EB-4758-8ECC-920080E785D9}.Debug|x86.ActiveCfg = Debug|Win32
+		{B73AD803-C0EB-4758-8ECC-920080E785D9}.Debug|x86.Build.0 = Debug|Win32
+		{B73AD803-C0EB-4758-8ECC-920080E785D9}.Release|x86.ActiveCfg = Release|Win32
+		{B73AD803-C0EB-4758-8ECC-920080E785D9}.Release|x86.Build.0 = Release|Win32
+		{D2D52896-A927-4649-A936-9612BEFEC02E}.Debug|x86.ActiveCfg = Debug|Win32
+		{D2D52896-A927-4649-A936-9612BEFEC02E}.Debug|x86.Build.0 = Debug|Win32
+		{D2D52896-A927-4649-A936-9612BEFEC02E}.Release|x86.ActiveCfg = Release|Win32
+		{D2D52896-A927-4649-A936-9612BEFEC02E}.Release|x86.Build.0 = Release|Win32
+		{5D976B3D-7B4C-4EC4-AC9E-3A7E315B0459}.Debug|x86.ActiveCfg = Debug|Win32
+		{5D976B3D-7B4C-4EC4-AC9E-3A7E315B0459}.Debug|x86.Build.0 = Debug|Win32
+		{5D976B3D-7B4C-4EC4-AC9E-3A7E315B0459}.Release|x86.ActiveCfg = Release|Win32
+		{5D976B3D-7B4C-4EC4-AC9E-3A7E315B0459}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F105410E-9FEE-4DD9-8A48-049580117CAD}
+	EndGlobalSection
+EndGlobal
