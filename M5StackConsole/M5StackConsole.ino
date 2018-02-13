@@ -3,7 +3,7 @@
 #include <M5Stack.h>
 #include <M5LoRa.h>
 
-#include "clock.h"
+#include "Clock.h"
 
 #define LORA_CS_PIN   5
 #define LORA_RST_PIN  26
@@ -18,16 +18,25 @@
 Clock myClock;
 
 void setup() {
-	M5.begin();
-	Serial.begin(115200);
 
+	// see https://www.aliexpress.com/store/product/M5Stack-Official-Stock-Offer-LoRa-Module-for-ESP32-DIY-Development-Kit-Wireless-433MHz-Built-in-Antenna/3226069_32839736315.html
+	// To aviod the problem that the screen can not display, 
+	// GPIO5, as the NSS pin of the LoRa module, needs to be pulled up when the system is initialized.
+	// M5Stack LorRa init
+	pinMode(5, OUTPUT);
+	digitalWrite(5, HIGH);
+	M5.begin(); 
+
+	Serial.begin(115200);
+	// PA_OUTPUT_RFO_PIN = 0
 	// override the default CS, reset, and IRQ pins (optional)
 	LoRa.setPins(LORA_CS_PIN, LORA_RST_PIN, LORA_IRQ_PIN); // set CS, reset, IRQ pin
+	LoRa.setTxPower(17,1);
 	Serial.println("LoRa Receiver");
 	M5.Lcd.println("LoRa Receiver");
 
 	// frequency in Hz (433E6, 866E6, 915E6)
-	if (!LoRa.begin(433.375E6)) {
+	if (!LoRa.begin(433.772280E6)) {
 		Serial.println("Starting LoRa failed!");
 		M5.Lcd.println("Starting LoRa failed!");
 		while (1);
@@ -79,9 +88,12 @@ void checkPacketReceipt() {
 		// read packet
 		while (LoRa.available()) {
 			char ch = (char)LoRa.read();
-			msg[ptr] = ch;
-			ptr++;
+			if (ch > 0) {
+				msg[ptr] = ch;
+				ptr++;
+			}
 		}
+		msg[ptr] = 0;
 
 	}
 	if (ptr > 0) {
@@ -89,18 +101,19 @@ void checkPacketReceipt() {
 		strncpy(thisDevice, msg, strlen(DEVICEID)) + '\0';
 		// received a packet
 
+		//M5.Lcd.setTextPadding(80);
+		//M5.Lcd.setTextDatum(MC_DATUM);
 		Serial.print("Received packet: \"");
 		M5.Lcd.print("Received packet: \"");
 
 		if (thisDevice == DEVICEID) { // TODO check crc as well
 
 			Serial.println(msg);
-			M5.Lcd.print("\" with RSSI ");
 		}
 		else {
 			Serial.println("ALERT");
 			Serial.println(msg);
-			M5.Lcd.print("\" with RSSI ");
+			M5.Lcd.print(msg);
 		}
 		// print RSSI of packet
 		Serial.print("\" with RSSI ");

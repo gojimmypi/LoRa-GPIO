@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{C5F80730-F44F-4478-BDAE-6634EFC2CA88}</ProjectGuid>
+    <ProjectGuid>{6CE43030-4523-49B0-82CA-DDE6CB64B51E}</ProjectGuid>
     <RootNamespace>
     </RootNamespace>
     <ProjectName>RogueDeviceTest</ProjectName>

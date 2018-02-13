@@ -15,11 +15,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="LoRa-GPIO.ino" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="__vm\.LoRa-GPIO.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="README.txt" />
   </ItemGroup>
 </Project>
