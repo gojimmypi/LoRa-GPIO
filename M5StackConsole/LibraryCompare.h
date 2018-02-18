@@ -1,15 +1,15 @@
 // Copyright (c) Sandeep Mistry. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#ifndef LORA_H
-#define LORA_H
+#ifndef M5LORA_H
+#define M5LORA_H
 
 #include <Arduino.h>
 #include <SPI.h>
 
-#define LORA_DEFAULT_SS_PIN    10
-#define LORA_DEFAULT_RESET_PIN 9
-#define LORA_DEFAULT_DIO0_PIN  2
+#define LORA_DEFAULT_SS_PIN    5
+#define LORA_DEFAULT_RESET_PIN 26
+#define LORA_DEFAULT_DIO0_PIN  36
 
 #define PA_OUTPUT_RFO_PIN      0
 #define PA_OUTPUT_PA_BOOST_PIN 1
