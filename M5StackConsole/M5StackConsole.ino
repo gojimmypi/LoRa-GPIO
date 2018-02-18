@@ -138,6 +138,7 @@ void setup() {
 	Serial.print("MISO:"); Serial.println(MISO);
 	Serial.print("SCK: "); Serial.println(SCK);
 	Serial.print("A0:  "); Serial.println(A0);
+	Serial.println("Setup Complete. Waiting for packets...");
 }
 
 void operationMessage(char * msg) {
@@ -241,31 +242,31 @@ void checkPacketReceipt() {
 
 
 
+	//// working propr Sandeep/M5LoRa library code
+	////if (ptr > 0) {
+	////	strncpy(thisDevice, msg, strlen(DEVICEID)) + '\0';
+	////	// received a packet
 
-	if (ptr > 0) {
-		strncpy(thisDevice, msg, strlen(DEVICEID)) + '\0';
-		// received a packet
+	////	//M5.Lcd.setTextPadding(80);
+	////	//M5.Lcd.setTextDatum(MC_DATUM);
+	////	Serial.print("Received packet: \"");
+	////	M5.Lcd.print("Received packet: \"");
 
-		//M5.Lcd.setTextPadding(80);
-		//M5.Lcd.setTextDatum(MC_DATUM);
-		Serial.print("Received packet: \"");
-		M5.Lcd.print("Received packet: \"");
+	////	if (thisDevice == DEVICEID) { // TODO check crc as well
 
-		if (thisDevice == DEVICEID) { // TODO check crc as well
-
-			Serial.println(msg);
-		}
-		else {
-			Serial.println("ALERT");
-			Serial.println(msg);
-			M5.Lcd.print(msg);
-		}
-		// print RSSI of packet
-		Serial.print("\" with RSSI ");
-		////Serial.println(LoRa.packetRssi());
-		M5.Lcd.print("\" with RSSI ");
-		//M5.Lcd.println(LoRa.packetRssi());
-	}
+	////		Serial.println(msg);
+	////	}
+	////	else {
+	////		Serial.println("ALERT");
+	////		Serial.println(msg);
+	////		M5.Lcd.print(msg);
+	////	}
+	////	// print RSSI of packet
+	////	Serial.print("\" with RSSI ");
+	////	////Serial.println(LoRa.packetRssi());
+	////	M5.Lcd.print("\" with RSSI ");
+	////	//M5.Lcd.println(LoRa.packetRssi());
+	////}
 }
 
 void loop() {
