@@ -7,6 +7,10 @@ arose when uploading binary to different COM ports in different projects.
 So for now, the projects contained in this solutions are opened in different
 instances of Visual Studio 2017 with the VisualMicro add-in installed.
 
+See also: https://gojimmypi.blogspot.com/2018/02/lora-range-issues.html
+
+and: https://gojimmypi.blogspot.com/2018/02/m5stack-lora-range-issues.html
+
 The 4 main projects of interest:
 
 # Console
@@ -68,3 +72,6 @@ http://www.visualmicro.com/forums/YaBB.pl?num=1518378800/2#2
 
 Apparently I had not read the full description properly and inadvertantly installed the most recent "Universal" drivers that don't work well with Windows 10.  :|
 
+# Notes
+Reminder: Sync a fork of a repository to keep it up-to-date with the upstream repository.
+https://help.github.com/articles/syncing-a-fork/

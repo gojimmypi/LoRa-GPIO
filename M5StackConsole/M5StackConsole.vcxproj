@@ -52,10 +52,14 @@
       <ForcedIncludeFiles>$(ProjectDir)__vm\.M5StackConsole.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <IgnoreStandardIncludePath>false</IgnoreStandardIncludePath>
       <PreprocessorDefinitions>__ESP32_ESp32__;__ESP32_ESP32__;_VMDEBUG=1;ESP_PLATFORM;HAVE_CONFIG_H;F_CPU=240000000L;ARDUINO=10805;ARDUINO_ARCH_ESP32;ESP32;CORE_DEBUG_LEVEL=0;__cplusplus=201103L;_VMICRO_INTELLISENSE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Bscmake>
+      <PreserveSbr>true</PreserveSbr>
+    </Bscmake>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

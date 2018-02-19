@@ -1,12 +1,22 @@
 // LCD:320x240 Colorful TFT LCD, ILI9341
 
-#include <RH_RF95.h>
-#include <RadioHead.h>
+// see RH_RF95.h (line 479)
+// Caution: the performance of this radio, especially with narrow bandwidths is strongly dependent on the
+// accuracy and stability of the chip clock. HopeRF and Semtech do not appear to 
+// recommend bandwidths of less than 62.5 kHz 
+// unless you have the optional Temperature Compensated Crystal Oscillator (TCXO) installed and 
+// enabled on your radio module. See the refernece manual for more data.
+// Also https://lowpowerlab.com/forum/rf-range-antennas-rfm69-library/lora-library-experiences-range/15/
+// and https://www.semtech.com/uploads/documents/an120014-xo-guidance-lora-modulation.pdf
+// TODO - investigate TCXO install / enable mode
+
 
 #include <M5Stack.h>
 // #include <M5LoRa.h> // due to naming (and probably hardware!) conflicts, we cannot use both
-
 #include <SPI.h>
+#include <RH_RF95.h>
+#include <RadioHead.h>
+
 #include "Clock.h"
 
 #define LORA_CS_PIN   5
@@ -26,9 +36,9 @@ Clock myClock;
 //#define LORA_DEFAULT_RESET_PIN 26
 //#define LORA_DEFAULT_DIO0_PIN  36
 
-// RadioHead defs for M5Stack (TODO are these correct?) 
+// RadioHead defs for M5Stack (TODO are these correct? init seems to be successful) 
 // we assume the "wing" for the ESP32 feather is connected to *different* pins as compared to M5Stack
-#define RFM95_CS 5   // 5// LORA_CS_PIN
+#define RFM95_CS 5   // LORA_CS_PIN
 #define RFM95_RST 26 // LORA_RST_PIN
 #define RFM95_INT 36 // M5 LORA_IRQ_PIN
 
@@ -54,7 +64,10 @@ void setup() {
 	digitalWrite(5, HIGH);
 	M5.begin();
 
+	while (!Serial);
 	Serial.begin(115200); // Serial.begin after M5.begin
+	delay(100);
+
 	Serial.println("Startup!");
 
 	Serial.println("Pins at setup start:");
@@ -81,6 +94,12 @@ void setup() {
 	delay(10);
 	digitalWrite(RFM95_RST, HIGH);
 	delay(10);
+
+	// manual reverse reset; desperation attempt in case reversed (does not appear that way) TODO confirm with oscilloscope
+	//digitalWrite(RFM95_RST, HIGH);
+	//delay(10);
+	//digitalWrite(RFM95_RST, LOW);
+	//delay(10);
 
 	// RadioHead
 	while (!rf95.init()) {
@@ -133,11 +152,11 @@ void setup() {
 	M5.Lcd.clearDisplay();
 	M5.Lcd.setCursor(0, 0);
 
-	Serial.print("SS:  "); Serial.println(SS);
-	Serial.print("MOSI:"); Serial.println(MOSI);
-	Serial.print("MISO:"); Serial.println(MISO);
-	Serial.print("SCK: "); Serial.println(SCK);
-	Serial.print("A0:  "); Serial.println(A0);
+	//Serial.print("SS:  "); Serial.println(SS);
+	//Serial.print("MOSI:"); Serial.println(MOSI);
+	//Serial.print("MISO:"); Serial.println(MISO);
+	//Serial.print("SCK: "); Serial.println(SCK);
+	//Serial.print("A0:  "); Serial.println(A0);
 	Serial.println("Setup Complete. Waiting for packets...");
 }
 
