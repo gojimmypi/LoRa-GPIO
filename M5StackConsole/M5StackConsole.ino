@@ -42,8 +42,8 @@ Clock myClock;
 // RadioHead defs for M5Stack (TODO are these correct? init seems to be successful) 
 // we assume the "wing" for the ESP32 feather is connected to *different* pins as compared to M5Stack
 #define RFM95_CS 5   // LORA_CS_PIN
-#define RFM95_RST 26 // LORA_RST_PIN
-#define RFM95_INT 36 // M5 LORA_IRQ_PIN 36 (jumper to 16)
+#define RFM95_RST 36 // LORA_RST_PIN
+#define RFM95_INT 26 // M5 LORA_IRQ_PIN 36 (jumper to 16)
 
 //  ESP32 feather w/wing  see https://github.com/adafruit/RadioHead/blob/master/examples/feather/Feather9x_TX/Feather9x_TX.ino#L56
 // #define RFM95_RST     27   // "A"
