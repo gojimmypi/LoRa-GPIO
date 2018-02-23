@@ -74,6 +74,34 @@ http://www.visualmicro.com/forums/YaBB.pl?num=1518378800/2#2
 
 Apparently I had not read the full description properly and inadvertantly installed the most recent "Universal" drivers that don't work well with Windows 10.  :|
 
+# Installation
+
+### Download Library
+
+#### Using the Arduino IDE Library Manager
+
+1. Choose ```Sketch``` -> ```Include Library``` -> ```Manage Libraries...```
+2. Type ```m5stack``` into the search box.
+3. Click the row to select the library.
+4. Click the ```Install``` button to install the library.
+5. Click "File-> Examples". Here are some test programs in "M5Stack->"
+
+#### Using Git (most environments)
+```sh
+cd ~/Documents/Arduino/libraries/
+git clone https://github.com/gojimmypi/RadioHead.git
+git clone https://github.com/gojimmypi/M5Stack
+```
+
+#### Using Git (Windows)
+```sh
+c:
+cd %USERPROFILE%\documents\libraries
+git clone https://github.com/gojimmypi/RadioHead.git
+git clone https://github.com/gojimmypi/M5Stack
+```
+
+
 # Notes
 Reminder: Sync a fork of a repository to keep it up-to-date with the upstream repository.
 https://help.github.com/articles/syncing-a-fork/
