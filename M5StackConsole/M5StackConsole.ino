@@ -1,5 +1,5 @@
 // LCD:320x240 Colorful TFT LCD, ILI9341
-
+// master
 // see RH_RF95.h (line 479)
 // Caution: the performance of this radio, especially with narrow bandwidths is strongly dependent on the
 // accuracy and stability of the chip clock. HopeRF and Semtech do not appear to 
@@ -12,14 +12,16 @@
 
 
 #include <M5Stack.h>
-// #include <M5LoRa.h> // due to naming (and probably hardware!) conflicts, we cannot use both M5LoRa and RadioHead concurrently
+// #include <M5LoRa.h> // due to naming (and probably hardware!) conflicts, we cannot use both
 #include <SPI.h>
-#include <RH_RF95.h> // #include <RadioHead.h>
+#include <RH_RF95.h>
+// #include <RadioHead.h>
+
+// #include <pins_arduino.h> 
 
 #include "Clock.h"
 
-// these INCORRECT defs can be found in LoRaReceiver example code for M5Stack in config.h
-// 
+// these defs can be found in LoRaReceiver example code for M5Stack in config.h
 //#define LORA_CS_PIN   5
 //#define LORA_RST_PIN  26
 //#define LORA_IRQ_PIN  36 //
@@ -34,10 +36,11 @@ Clock myClock;
 
 /* M5Stack LoRa pin defs from M5Lora.h (Sandeep Mistry library) */
 //#define LORA_DEFAULT_SS_PIN    5
-//#define LORA_DEFAULT_RESET_PIN 26  
-//#define LORA_DEFAULT_DIO0_PIN  36 // not actually used; registers are polled, not interrupt driven in this release of Sandeep
+//#define LORA_DEFAULT_RESET_PIN 26
+//#define LORA_DEFAULT_DIO0_PIN  36
 
-// RadioHead defs for M5Stack - NOTE some documentation incorrectly reversed the labels for RST & IRQ
+// RadioHead defs for M5Stack (TODO are these correct? init seems to be successful) 
+// we assume the "wing" for the ESP32 feather is connected to *different* pins as compared to M5Stack
 #define RFM95_CS 5   // LORA_CS_PIN
 #define RFM95_RST 36 // LORA_RST_PIN
 #define RFM95_INT 26 // M5 LORA_IRQ_PIN 36 (jumper to 16)
@@ -55,11 +58,9 @@ Clock myClock;
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
-// TODO - determine if RAM attributes are really needed for IRQs on ESP32
-//static DRAM_ATTR   
+//static DRAM_ATTR
 int thisIndex = 0;
 int lastIndex = 0;
-
 //static void myISR(void *args) {
 // IRAM_ATTR 
 	 void myISR() {
@@ -113,12 +114,13 @@ void setup() {
 	//attachInterrupt(35, myISR, RISING);
 
 
-	// TODO is this the preferred way to attach interrupts?
 	//gpio_install_isr_service(0);
 	//gpio_isr_handler_add((gpio_num_t)TEST_GPIO, myISR, NULL);
 
 
 	// SS = 5; // RadioHead_h overwrites this TODO edit source def
+
+
 
 
 	// setup LoRa reset line
@@ -164,11 +166,11 @@ void setup() {
 
 	// RadioHead
 	while (!rf95.init()) {
-		Serial.println("RadioHead LoRa radio init failed!");
+		Serial.println("RadioHead LoRa radio init failed");
 		while (1); // TODO - we don't really want to wait here forever
 	}
-	Serial.print("Using SlaveSelectPin=");
-	Serial.println(rf95.getSlaveSelectPin());
+	Serial.print("thisSlaveSelectPin=");
+	Serial.println(rf95.thisSlaveSelectPin());
 	Serial.println("RadioHead LoRa radio init OK!");
 
 	// Defaults after init are 434.0MHz, modulation GFSK_Rb250Fd250, +13dbM
