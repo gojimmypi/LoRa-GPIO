@@ -24,16 +24,18 @@ There's currently no display implemented on this Console
 ESP32 based M5Stack LoRa that initially was working with Sandeep Mistry's LoRa library, but
 had rather poor range. The M5Stack has a nice enclosure and built-in display.
 
+The working, but poor range code can be found here (NOTE it was saved with frequency=433.375E6):
+https://github.com/gojimmypi/LoRa-GPIO/blob/8e96d83eca89cd9ac19fb5eeca8fb276b7a5dddf/M5StackConsole/M5StackConsole.ino
+
 The current objective is to get the RadioHead library working with this project.
 
-See the M5-RadioHead branch: https://github.com/gojimmypi/LoRa-GPIO/tree/M5-RadioHead
+See the M5-RadioHead branch for this project: https://github.com/gojimmypi/LoRa-GPIO/tree/M5-RadioHead
 
 The 11-month old Adafruit fork of RadioHead: https://github.com/gojimmypi/RadioHead/tree/development
 
 The Master RadioHead overwritten with working download from Adafruit tutorial (missing ESP32 support)
 https://learn.adafruit.com/adafruit-feather-32u4-radio-with-lora-radio-module/using-the-rfm-9x-radio
-
-Found on this local branch:  https://github.com/gojimmypi/RadioHead/tree/master
+which can be found on this local fork branch:  https://github.com/gojimmypi/RadioHead/tree/master
 
 Then new changes to most recent code will be applied to the M5Stack local branch: https://github.com/gojimmypi/RadioHead/tree/M5Stack (not yet updated with most recent, 11-month old code)
 

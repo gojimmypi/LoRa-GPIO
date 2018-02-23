@@ -144,6 +144,7 @@ void loop()
 	else {
 		strncpy(radiopacket, DEVICEID" Closed" + '\0', RADIO_PACKET_SIZE);
 	}
+	//char radiopacket[20] = "Hello World #      ";
 
 	itoa(packetnum++, radiopacket + 13, 10);
 	Serial.print("Sending "); Serial.println(radiopacket);
