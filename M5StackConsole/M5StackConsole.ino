@@ -40,7 +40,7 @@ Clock myClock;
 
 // RadioHead defs for M5Stack - NOTE some documentation incorrectly reversed the labels for RST & IRQ
 #define RFM95_CS 5   // LORA_CS_PIN
-#define RFM95_RST 36 // LORA_RST_PIN
+#define RFM95_RST 36 // LORA_RST_PIN is 36, TODO but it is read-only! so we'll need to short to another pin
 #define RFM95_INT 26 // M5 LORA_IRQ_PIN 36 (jumper to 16)
 
 //  ESP32 feather w/wing  see https://github.com/adafruit/RadioHead/blob/master/examples/feather/Feather9x_TX/Feather9x_TX.ino#L56
@@ -99,15 +99,15 @@ void setup() {
 	delay(100);
 
 
-	int _interruptPin = TEST_GPIO;
-	int interruptNumber = digitalPinToInterrupt(_interruptPin);
-	pinMode(_interruptPin, INPUT);
+	//int _interruptPin = TEST_GPIO;
+	//int interruptNumber = digitalPinToInterrupt(_interruptPin);
+	//pinMode(_interruptPin, INPUT);
 
-	int errInt = gpio_intr_enable((gpio_num_t)interruptNumber);
-	Serial.print("interruptNumber gpio_intr_enable=");
-	Serial.println(errInt);
+	//int errInt = gpio_intr_enable((gpio_num_t)interruptNumber);
+	//Serial.print("interruptNumber gpio_intr_enable=");
+	//Serial.println(errInt);
 
-	attachInterrupt(interruptNumber, myISR, RISING);
+	//attachInterrupt(interruptNumber, myISR, RISING);
 
 	// pinMode(35, INPUT);
 
@@ -207,7 +207,7 @@ void setup() {
 	// If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then 
 	// you can set transmitter powers from 5 to 23 dBm:
 	// rf95.setTxPower(13, false);
-	rf95.setTxPower(23, false);
+	rf95.setTxPower(13, false);
 
 	// LoRa.setSyncWord(0x69);
 	Serial.println("LoRa init succeeded.");
@@ -251,11 +251,17 @@ void operationMessage(char * msg) {
 	int xpos = 0;
 	int ypos = 85; // Top left corner of Operation text, about half way down = 85
 
+
+	String str = (String)msg + " RSSI = " + rf95.lastRssi();
+
 	M5.Lcd.setFreeFont(FF18);                 // Select the font
 	M5.Lcd.setTextColor(TFT_YELLOW, TFT_BLACK);    // Set colour yellow with black background
-	M5.Lcd.drawString(msg, xpos, ypos, GFXFF);// Print the string name of the font
 
-	Serial.printf(msg);
+	M5.Lcd.drawString(str, xpos, ypos, GFXFF);// Print the string name of the font
+
+	Serial.println(str);
+
+
 }
 
 
@@ -282,9 +288,13 @@ bool isMessageReceived() {
 }
 
 int notCount = 0;
-void checkPacketReceipt() {
+void checkPacketReceipt(int timeToWait) {
+	rf95.setModeIdle();
+	delay(10);  // Receiver Startup Time 250.0 kHz = 63us; 2.5kHz = 2.33 ms
+                // TS_RE or later after setting the device in Receive mode, any incoming packet will be detected and demodulated by the transceiver.
+	yield();
 	int x = 0;
-	//// try to parse packet
+	// try to parse packet
 	//M5.Lcd.setCursor(0, 160);
 	//char msg[20] = "";
 	//int ptr = 0;
@@ -306,30 +316,30 @@ void checkPacketReceipt() {
 	////}
 
 
-	//Serial.println(x);
-	if (rf95.available())
+	Serial.print("Waiting...");
+	if (rf95.waitAvailableTimeout(timeToWait))
 	{
 		x = 0;
-		Serial.print("Available! ");
+		Serial.println("Available! ");
 		if (isMessageReceived())
 		{
 			//digitalWrite(LED, HIGH);
-			RH_RF95::printBuffer("Received: ", buf, len);
+			//RH_RF95::printBuffer("Received: ", buf, len);
 			Serial.print("Got: ");
 			Serial.println((char*)buf);
-			Serial.print("RSSI: ");
+			//Serial.print("RSSI: ");
 			Serial.println(rf95.lastRssi(), DEC);
-			delay(10);
+			operationMessage( (char*)buf);
 			// Send a reply
-			delay(200); // TODO may or may not be needed
-			uint8_t data[] = "And hello back to you";
-			rf95.send(data, sizeof(data));
-			if (rf95.waitPacketSent()) {
-				Serial.println("Sent a reply");
-			}
-			else {
-				Serial.println("Reply failed!");
-			}
+			//delay(200); // TODO may or may not be needed
+			//uint8_t data[] = "And hello back to you";
+			//rf95.send(data, sizeof(data));
+			//if (rf95.waitPacketSent(2000)) {
+			//	Serial.println("Sent a reply");
+			//}
+			//else {
+			//	Serial.println("Reply failed!");
+			//}
 			//digitalWrite(LED, LOW);
 		}
 		else
@@ -341,7 +351,7 @@ void checkPacketReceipt() {
 	{
 		//notCount++;
 		//Serial.print(notCount);
-		//Serial.println(" Not Available! ");
+		Serial.println(" Not Available! ");
 	}
 
 
@@ -372,34 +382,34 @@ void checkPacketReceipt() {
 	////	M5.Lcd.print("\" with RSSI ");
 	////	//M5.Lcd.println(LoRa.packetRssi());
 	////}
+	rf95.sleep();
 }
 #endif
 
 int lastCountInterrupt = 0;
 void loop() {
-	if (thisIndex != lastIndex) {
-		Serial.print(thisIndex);
-		Serial.println(" Interrupt!");
-		lastIndex = thisIndex;
-	}
+	//if (thisIndex != lastIndex) {
+	//	Serial.print(thisIndex);
+	//	Serial.println(" Interrupt!");
+	//	lastIndex = thisIndex;
+	//}
 
-	if (rf95.countInterrupt() != lastCountInterrupt) {
-		Serial.print(rf95.countInterrupt());
-		Serial.println("RH_95 Interrupt!");
-		lastCountInterrupt = rf95.countInterrupt();
-	}
+	//if (rf95.countInterrupt() != lastCountInterrupt) {
+	//	Serial.print(rf95.countInterrupt());
+	//	Serial.println("RH_95 Interrupt!");
+	//	lastCountInterrupt = rf95.countInterrupt();
+	//}
+	//buttons_test();
 
-	buttons_test();
 	// Serial.println(digitalRead(TEST_GPIO));
 	myClock.refreshDisplay();
 
-	//	buttonsProcess();
+	buttonsProcess();
 
-	//	checkPacketReceipt();
+	checkPacketReceipt(200);
+
+	delay(1);
 	yield();
-
-	YIELD;
-	delay(100);
 
 	M5.update();
 
