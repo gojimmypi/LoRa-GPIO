@@ -50,7 +50,8 @@ Clock myClock;
 
 
 // Change to 434.0 or other frequency, must match RX's freq!
-#define RF95_FREQ 433.0  // RadioHead in MHz, M5 in Hz (e.g. 433E6)
+#define RF95_FREQ 433
+// RadioHead in MHz, M5 in Hz (e.g. 433E6)
 
 
 // Singleton instance of the radio driver
@@ -83,9 +84,9 @@ void buttons_test() {
 }
 
 
-#define OTHER 1
 #define TEST_GPIO (39) // 39 = button A; Lora Int = 36.
 void setup() {
+	delay(100);
 	// see https://www.aliexpress.com/store/product/M5Stack-Official-Stock-Offer-LoRa-Module-for-ESP32-DIY-Development-Kit-Wireless-433MHz-Built-in-Antenna/3226069_32839736315.html
 	// To avoid the problem that the screen can not display, 
 	// GPIO5, as the NSS pin of the LoRa module, needs to be pulled up when the system is initialized.
@@ -129,9 +130,6 @@ void setup() {
 
 	Serial.println("Startup! Version 1.01");
 
-#ifdef  OTHER
-
-
 	Serial.println("Pins at setup start:");
 	Serial.print("  SS:        "); Serial.println(SS);
 	Serial.print("  MOSI:      "); Serial.println(MOSI);
@@ -168,6 +166,7 @@ void setup() {
 		Serial.println("RadioHead LoRa radio init failed!");
 		while (1); // TODO - we don't really want to wait here forever
 	}
+	delay(1000);
 	Serial.print("Using SlaveSelectPin=");
 	Serial.println(rf95.getSlaveSelectPin());
 	Serial.println("RadioHead LoRa radio init OK!");
@@ -241,11 +240,9 @@ void setup() {
 
 	Serial.print("rf95 mode: ");
 	Serial.println(rf95.mode());
-
-#endif //  OTHER
 }
 
-#ifdef OTHER
+
 
 void operationMessage(char * msg) {
 	int xpos = 0;
@@ -290,7 +287,7 @@ bool isMessageReceived() {
 int notCount = 0;
 void checkPacketReceipt(int timeToWait) {
 	rf95.setModeIdle();
-	delay(10);  // Receiver Startup Time 250.0 kHz = 63us; 2.5kHz = 2.33 ms
+	delay(10);  // ms delay; Receiver Startup Time 250.0 kHz = 63us; 2.5kHz = 2.33 ms
                 // TS_RE or later after setting the device in Receive mode, any incoming packet will be detected and demodulated by the transceiver.
 	yield();
 	int x = 0;
@@ -316,7 +313,7 @@ void checkPacketReceipt(int timeToWait) {
 	////}
 
 
-	Serial.print("Waiting...");
+	Serial.print("Waiting checkPacketReceipt...");
 	if (rf95.waitAvailableTimeout(timeToWait))
 	{
 		x = 0;
@@ -327,7 +324,7 @@ void checkPacketReceipt(int timeToWait) {
 			//RH_RF95::printBuffer("Received: ", buf, len);
 			Serial.print("Got: ");
 			Serial.println((char*)buf);
-			//Serial.print("RSSI: ");
+			Serial.print("RSSI: ");
 			Serial.println(rf95.lastRssi(), DEC);
 			operationMessage( (char*)buf);
 			// Send a reply
@@ -383,8 +380,9 @@ void checkPacketReceipt(int timeToWait) {
 	////	//M5.Lcd.println(LoRa.packetRssi());
 	////}
 	rf95.sleep();
+	delay(10);
 }
-#endif
+
 
 int lastCountInterrupt = 0;
 void loop() {
@@ -408,9 +406,24 @@ void loop() {
 
 	checkPacketReceipt(200);
 
-	delay(1);
+	delay(10);
 	yield();
 
 	M5.update();
+	Serial.print(":: txGood: ");
+	Serial.println(rf95.txGood(), DEC);
+	
+	Serial.print(":: rxBad: ");
+	Serial.println(rf95.rxBad(), DEC);
+	Serial.print(":: rxInvalid: ");
+	Serial.println(rf95.rxInvalid(), DEC);
 
+	Serial.print(":: rxGood: ");
+	Serial.println(rf95.rxGood(), DEC);
+
+	Serial.println();
+	Serial.println("*********************************************");
+	Serial.println("  LOOP!");
+	Serial.println("*********************************************");
+	Serial.println();
 }
