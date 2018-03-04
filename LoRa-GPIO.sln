@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2027
+VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LoRa-GPIO", "LoRa-GPIO.vcxproj", "{C5F80730-F44F-4478-BDAE-6634EFC2CA88}"
 EndProject
@@ -12,6 +12,12 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "M5StackConsole", "M5StackConsole\M5StackConsole.vcxproj", "{5D976B3D-7B4C-4EC4-AC9E-3A7E315B0459}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RogueDeviceTest", "RogueDeviceTest\RogueDeviceTest.vcxproj", "{6CE43030-4523-49B0-82CA-DDE6CB64B51E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EE7123E2-1FDC-4E14-91D9-5AA0ECAC576E}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		README.txt = README.txt
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

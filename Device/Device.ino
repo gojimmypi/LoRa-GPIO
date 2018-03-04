@@ -57,7 +57,7 @@
 */
 
 // Change to 434.0 or other frequency, must match RX's freq!
-#define RF95_FREQ 433
+#define RF95_FREQ 433.0
 
 
 #define LED 13 // Blinky on receipt
@@ -84,13 +84,16 @@ int isGateOpen() {
 
 void setup()
 {
-#ifdef _DEBUG
+	delay(250);
+
+
+// #ifdef _DEBUG
 	//while (!Serial);
 	Serial.begin(9600);
 	delay(100);
 	Serial.println("Gate TX Test!");
 	blinkLED(10);
-#endif
+// #endif
 
 
 	// LoRa32u4 init
@@ -117,6 +120,8 @@ void setup()
 		//Serial.println("setFrequency failed");
 		while (1);
 	}
+	delay(250);
+
 	//Serial.print("Set Freq to: "); Serial.println(RF95_FREQ);
 
 	// Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
@@ -125,6 +130,8 @@ void setup()
 	// If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin 
 	// then you can set transmitter powers from 5 to 23 dBm:
 	rf95.setTxPower(23, false);
+	delay(250);
+
 }
 
 int16_t packetnum = 0;  // packet counter, we increment per xmission
@@ -144,6 +151,7 @@ void loop()
 	else {
 		strncpy(radiopacket, DEVICEID" Closed" + '\0', RADIO_PACKET_SIZE);
 	}
+	//char radiopacket[20] = "Hello World #      ";
 
 	itoa(packetnum++, radiopacket + 13, 10);
 	Serial.print("Sending "); Serial.println(radiopacket);

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  	<meta charset="utf-8" />
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+    <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+  	<title></title>
+    <style type="text/css">
+    .cType {
+      color: purple;
+    }
+    .defineType {
+      color: blue;
+    }
+    .vType {
+      color: maroon;
+    }
+    </style>
+  </head>
+  <body>
+  <ul data-role="listview">
+    <div data-role="collapsible">
+    <h4>Display.h</h4>
+    <ul data-role="listview" data-filter="true" data-filter-placeholder="Search Display.h..." data-inset="true">
+    <div data-role="collapsible">
+      <h4>init/begin</h4>
+      <p><pre><span class="cType">void</span> init(); begin();<br />// Same - begin included for backwards compatibility</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>drawPixel</h4>
+      <p><pre><span class="cType">void</span> drawPixel(<span class="cType">uint32_t</span> x, <span class="cType">uint32_t</span> y, <span class="cType">uint32_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>drawChar</h4>
+      <p><pre><span class="cType">void</span> drawChar(<span class="cType">int32_t</span> x, <span class="cType">int32_t</span> y, unsigned char c, <span class="cType">uint32_t</span> color, <span class="cType">uint32_t</span> bg, <span class="cType">uint8_t</span> font);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setWindow</h4>
+      <p><pre><span class="cType">void</span> setWindow(<span class="cType">int16_t</span> x0, <span class="cType">int16_t</span> y0, <span class="cType">int16_t</span> x1, <span class="cType">int16_t</span> y1);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>pushColor</h4>
+      <p><pre><span class="cType">void</span> pushColor(<span class="cType">uint16_t</span> color[, <span class="cType">uint16_t</span> len]);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>pushColors</h4>
+      <p><pre><span class="cType">void</span> pushColors(<span class="cType">uint16_t</span> *data, <span class="cType">uint8_t</span> len);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>pushColors</h4>
+      <p><pre><span class="cType">void</span> pushColors(<span class="cType">uint8_t</span> *data, <span class="cType">uint32_t</span> len);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>fillScreen</h4>
+      <p><pre><span class="cType">void</span> fillScreen(<span class="cType">uint32_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>drawLine</h4>
+      <p><pre><span class="cType">void</span> drawLine(<span class="cType">int32_t</span> x0, <span class="cType">int32_t</span> y0, <span class="cType">int32_t</span> x1, <span class="cType">int32_t</span> y1, <span class="cType">uint32_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>drawFastVLine</h4>
+      <p><pre><span class="cType">void</span> drawFastVLine(<span class="cType">int32_t</span> x, <span class="cType">int32_t</span> y, <span class="cType">int32_t</span> h, <span class="cType">uint32_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>drawFastHLine</h4>
+      <p><pre><span class="cType">void</span> drawFastHLine(<span class="cType">int32_t</span> x, <span class="cType">int32_t</span> y, <span class="cType">int32_t</span> w, <span class="cType">uint32_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>drawRect</h4>
+      <p><pre><span class="cType">void</span> drawRect(<span class="cType">int32_t</span> x, <span class="cType">int32_t</span> y, <span class="cType">int32_t</span> w, <span class="cType">int32_t</span> h, <span class="cType">uint32_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>fillRect</h4>
+      <p><pre><span class="cType">void</span> fillRect(<span class="cType">int32_t</span> x, <span class="cType">int32_t</span> y, <span class="cType">int32_t</span> w, <span class="cType">int32_t</span> h, <span class="cType">uint32_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>drawRoundRect</h4>
+      <p><pre><span class="cType">void</span> drawRoundRect(<span class="cType">int32_t</span> x0, <span class="cType">int32_t</span> y0, <span class="cType">int32_t</span> w, <span class="cType">int32_t</span> h, <span class="cType">int32_t</span> radius, <span class="cType">uint32_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>fillRoundRect</h4>
+      <p><pre><span class="cType">void</span> fillRoundRect(<span class="cType">int32_t</span> x0, <span class="cType">int32_t</span> y0, <span class="cType">int32_t</span> w, <span class="cType">int32_t</span> h, <span class="cType">int32_t</span> radius, <span class="cType">uint32_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setRotation</h4>
+      <p><pre><span class="cType">void</span> setRotation(<span class="cType">uint8_t</span> r);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>invertDisplay</h4>
+      <p><pre><span class="cType">void</span> invertDisplay(boolean i);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>drawCircle</h4>
+      <p><pre><span class="cType">void</span> drawCircle(<span class="cType">int32_t</span> x0, <span class="cType">int32_t</span> y0, <span class="cType">int32_t</span> r, <span class="cType">uint32_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>drawCircleHelper</h4>
+      <p><pre><span class="cType">void</span> drawCircleHelper(<span class="cType">int32_t</span> x0, <span class="cType">int32_t</span> y0, <span class="cType">int32_t</span> r, <span class="cType">uint8_t</span> cornername, <span class="cType">uint32_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>fillCircle</h4>
+      <p><pre><span class="cType">void</span> fillCircle(<span class="cType">int32_t</span> x0, <span class="cType">int32_t</span> y0, <span class="cType">int32_t</span> r, <span class="cType">uint32_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>fillCircleHelper</h4>
+      <p><pre><span class="cType">void</span> fillCircleHelper(<span class="cType">int32_t</span> x0, <span class="cType">int32_t</span> y0, <span class="cType">int32_t</span> r, <span class="cType">uint8_t</span> cornername, <span class="cType">int32_t</span> delta, <span class="cType">uint32_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>drawEllipse</h4>
+      <p><pre><span class="cType">void</span> drawEllipse(<span class="cType">int16_t</span> x0, <span class="cType">int16_t</span> y0, <span class="cType">int16_t</span> rx, <span class="cType">int16_t</span> ry, <span class="cType">uint16_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>fillEllipse</h4>
+      <p><pre><span class="cType">void</span> fillEllipse(<span class="cType">int16_t</span> x0, <span class="cType">int16_t</span> y0, <span class="cType">int16_t</span> rx, <span class="cType">int16_t</span> ry, <span class="cType">uint16_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>drawTriangle</h4>
+      <p><pre><span class="cType">void</span> drawTriangle(<span class="cType">int32_t</span> x0, <span class="cType">int32_t</span> y0, <span class="cType">int32_t</span> x1, <span class="cType">int32_t</span> y1, <span class="cType">int32_t</span> x2, <span class="cType">int32_t</span> y2, <span class="cType">uint32_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>fillTriangle</h4>
+      <p><pre><span class="cType">void</span> fillTriangle(<span class="cType">int32_t</span> x0, <span class="cType">int32_t</span> y0, <span class="cType">int32_t</span> x1, <span class="cType">int32_t</span> y1, <span class="cType">int32_t</span> x2, <span class="cType">int32_t</span> y2, <span class="cType">uint32_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>drawBitmap</h4>
+      <p><pre><span class="cType">void</span> drawBitmap(<span class="cType">int16_t</span> x, <span class="cType">int16_t</span> y, const <span class="cType">uint8_t</span> *bitmap, <span class="cType">int16_t</span> w, <span class="cType">int16_t</span> h, <span class="cType">uint16_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>drawBitmap</h4>
+      <p><pre><span class="cType">void</span> drawBitmap(<span class="cType">int16_t</span> x, <span class="cType">int16_t</span> y, <span class="cType">int16_t</span> w, <span class="cType">int16_t</span> h, const <span class="cType">uint16_t</span> *pcolors);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setCursor</h4>
+      <p><pre><span class="cType">void</span> setCursor(<span class="cType">int16_t</span> x, <span class="cType">int16_t</span> y);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setCursor</h4>
+      <p><pre><span class="cType">void</span> setCursor(<span class="cType">int16_t</span> x, <span class="cType">int16_t</span> y, <span class="cType">uint8_t</span> font);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setTextColor</h4>
+      <p><pre><span class="cType">void</span> setTextColor(<span class="cType">uint16_t</span> color);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setTextColor</h4>
+      <p><pre><span class="cType">void</span> setTextColor(<span class="cType">uint16_t</span> fgcolor, <span class="cType">uint16_t</span> bgcolor);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setTextSize</h4>
+      <p><pre><span class="cType">void</span> setTextSize(<span class="cType">uint8_t</span> size);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setTextWrap</h4>
+      <p><pre><span class="cType">void</span> setTextWrap(boolean wrap);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setTextDatum</h4>
+      <p><pre><span class="cType">void</span> setTextDatum(<span class="cType">uint8_t</span> datum);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setTextPadding</h4>
+      <p><pre><span class="cType">void</span> setTextPadding(<span class="cType">uint16_t</span> x_width);</pre></p>
+    </div>
+    </ul>
+    
+    <p><hr /></p>
+    
+    </div>
+    <div data-role="collapsible">
+    <h4>M5LoRa.h</h4>
+    <ul data-role="listview" data-filter="true" data-filter-placeholder="Search LoRa.h..." data-inset="true">
+    <div data-role="collapsible">
+      <h4>begin</h4>
+      <p><pre><span class="cType">virtual int</span> begin(long frequency);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>end</h4>
+      <p><pre><span class="cType">void</span> end();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>beginPacket</h4>
+      <p><pre><span class="cType">int</span> beginPacket(<span class="cType">int</span> implicitHeader = false);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>endPacket</h4>
+      <p><pre><span class="cType">int</span> endPacket();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>parsePacket</h4>
+      <p><pre><span class="cType">int</span> parsePacket(<span class="cType">int</span> size = 0);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>packetRssi</h4>
+      <p><pre><span class="cType">int</span> packetRssi();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>packetSnr</h4>
+      <p><pre><span class="cType">float</span> packetSnr();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>write</h4>
+      <p><pre><span class="cType">virtual size_t</span> write(<span class="cType">uint8_t</span> <span class="cType">byte</span>);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>write</h4>
+      <p><pre><span class="cType">virtual size_t</span> write(const <span class="cType">uint8_t</span> *buffer, size_t size);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>available</h4>
+      <p><pre><span class="cType">virtual int</span> available();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>read</h4>
+      <p><pre><span class="cType">virtual int</span> read();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>peek</h4>
+      <p><pre><span class="cType">virtual int</span> peek();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>flush</h4>
+      <p><pre><span class="cType">virtual void</span> flush();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>onReceive</h4>
+      <p><pre><span class="cType">void</span> onReceive(<span class="cType">void</span>(*callback)(<span class="cType">int</span>));</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>receive</h4>
+      <p><pre><span class="cType">void</span> receive(<span class="cType">int</span> size = 0);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>idle</h4>
+      <p><pre><span class="cType">void</span> idle();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>sleep</h4>
+      <p><pre><span class="cType">void</span> sleep();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setTxPower</h4>
+      <p><pre><span class="cType">void</span> setTxPower(<span class="cType">int</span> level, <span class="cType">int</span> outputPin = PA_OUTPUT_PA_BOOST_PIN);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setFrequency</h4>
+      <p><pre><span class="cType">void</span> setFrequency(long frequency);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setSpreadingFactor</h4>
+      <p><pre><span class="cType">void</span> setSpreadingFactor(<span class="cType">int</span> sf);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setSignalBandwidth</h4>
+      <p><pre><span class="cType">void</span> setSignalBandwidth(long sbw);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setCodingRate4</h4>
+      <p><pre><span class="cType">void</span> setCodingRate4(<span class="cType">int</span> denominator);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setPreambleLength</h4>
+      <p><pre><span class="cType">void</span> setPreambleLength(long length);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setSyncWord</h4>
+      <p><pre><span class="cType">void</span> setSyncWord(<span class="cType">int</span> sw);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>enableCrc</h4>
+      <p><pre><span class="cType">void</span> enableCrc();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>disableCrc</h4>
+      <p><pre><span class="cType">void</span> disableCrc();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>crc</h4>
+      <p><pre><span class="cType">void</span> crc();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>enableCrc</h4>
+      <p><pre><span class="cType">void</span> enableCrc();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>noCrc</h4>
+      <p><pre><span class="cType">void</span> noCrc();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>disableCrc</h4>
+      <p><pre><span class="cType">void</span> disableCrc();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>random</h4>
+      <p><pre><span class="cType">byte</span> random();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setPins</h4>
+      <p><pre><span class="cType">void</span> setPins(<span class="cType">int</span> ss = LORA_DEFAULT_SS_PIN, <span class="cType">int</span> reset = LORA_DEFAULT_RESET_PIN, <span class="cType">int</span> dio0 = LORA_DEFAULT_DIO0_PIN);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>setSPIFrequency</h4>
+      <p><pre><span class="cType">void</span> setSPIFrequency(<span class="cType">uint32_t</span> frequency);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>dumpRegisters</h4>
+      <p><pre><span class="cType">void</span> dumpRegisters(Stream& out);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>readRegister</h4>
+      <p><pre><span class="cType">uint8_t</span> readRegister(<span class="cType">uint8_t</span> address);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>writeRegister</h4>
+      <p><pre><span class="cType">void</span> writeRegister(<span class="cType">uint8_t</span> address, <span class="cType">uint8_t</span> value);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>explicitHeaderMode</h4>
+      <p><pre><span class="cType">void</span> explicitHeaderMode();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>implicitHeaderMode</h4>
+      <p><pre><span class="cType">void</span> implicitHeaderMode();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>handleDio0Rise</h4>
+      <p><pre><span class="cType">void</span> handleDio0Rise();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>singleTransfer</h4>
+      <p><pre><span class="cType">uint8_t</span> singleTransfer(<span class="cType">uint8_t</span> address, <span class="cType">uint8_t</span> value);</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>onDio0Rise</h4>
+      <p><pre><span class="cType">static void</span> onDio0Rise();</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>_spiSettings</h4>
+      <p><pre><span class="cType">SPISettings</span> _spiSettings;</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>_ss</h4>
+      <p><pre><span class="cType">int</span> _ss;</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>_reset</h4>
+      <p><pre><span class="cType">int</span> _reset;</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>_dio0</h4>
+      <p><pre><span class="cType">int</span> _dio0;</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>_frequency</h4>
+      <p><pre><span class="cType">int</span> _frequency;</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>_packetIndex</h4>
+      <p><pre><span class="cType">int</span> _packetIndex;</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>_implicitHeaderMode</h4>
+      <p><pre><span class="cType">int</span> _implicitHeaderMode;</pre></p>
+    </div>
+    <div data-role="collapsible">
+      <h4>_onReceive</h4>
+      <p><pre><span class="cType">void</span> (*_onReceive)(<span class="cType">int</span>);</pre></p>
+    </div>
+    </ul>
+    </div>
+  </body>
+</html>

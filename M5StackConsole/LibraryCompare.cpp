@@ -337,8 +337,7 @@ void LoRaClass::setTxPower(int level, int outputPin)
 			level = 17;
 		}
 
-		//writeRegister(REG_PA_CONFIG, PA_BOOST | (level - 2));
-		writeRegister(REG_PA_CONFIG, PA_BOOST | (15 - level));
+		writeRegister(REG_PA_CONFIG, PA_BOOST | (level - 2));
 	}
 }
 
