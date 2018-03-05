@@ -16,6 +16,11 @@
 #include <SPI.h>
 #include <RH_RF95.h>
 
+// RadioHead defs for M5Stack - NOTE some documentation incorrectly reversed the labels for RST & IRQ
+//#define RFM95_CS 5   // LORA_CS_PIN
+//#define RFM95_RST 36 // LORA_RST_PIN is 36, TODO but it is read-only! so we'll need to short to another pin
+//#define RFM95_INT 26 // M5 LORA_IRQ_PIN 36 (jumper to 16)
+
 /* for feather32u4 */
 #define RFM95_CS 8
 #define RFM95_RST 4
