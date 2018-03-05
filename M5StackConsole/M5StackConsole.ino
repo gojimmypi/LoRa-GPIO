@@ -16,7 +16,10 @@
 // #include <M5LoRa.h> // due to naming (and probably hardware!) conflicts, we cannot use both M5LoRa and RadioHead concurrently
 #include <SPI.h>
 #include <RH_RF95.h> // #include <RadioHead.h>
-
+#include <WiFi.h>
+#include <ESPmDNS.h>
+#include <WiFiClient.h>
+#include <Preferences.h>
 #include "Clock.h"
 
 // these INCORRECT defs can be found in LoRaReceiver example code for M5Stack in config.h
@@ -83,6 +86,8 @@ void buttons_test() {
 	}
 }
 
+// wifi config store
+Preferences preferences;
 
 #define TEST_GPIO (39) // 39 = button A; Lora Int = 36.
 void setup() {
@@ -94,6 +99,8 @@ void setup() {
 	pinMode(5, OUTPUT);
 	digitalWrite(5, HIGH);
 	M5.begin();
+	preferences.end();
+
 
 	while (!Serial);
 	Serial.begin(115200); // Serial.begin after M5.begin
@@ -397,7 +404,7 @@ void loop() {
 	//	Serial.println("RH_95 Interrupt!");
 	//	lastCountInterrupt = rf95.countInterrupt();
 	//}
-	//buttons_test();
+	buttons_test();
 
 	// Serial.println(digitalRead(TEST_GPIO));
 	myClock.refreshDisplay();
@@ -420,6 +427,13 @@ void loop() {
 
 	Serial.print(":: rxGood: ");
 	Serial.println(rf95.rxGood(), DEC);
+
+	//Serial.print("0x");
+	//Serial.print(rf95.readRegister((uint8_t)0x1d), HEX);
+	//Serial.print(", 0x");
+	//Serial.print(rf95.readRegister((uint8_t)0x1e), HEX);
+	//Serial.print(", 0x");
+	//Serial.print(rf95.readRegister((uint8_t)0x26), HEX);
 
 	Serial.println();
 	Serial.println("*********************************************");
