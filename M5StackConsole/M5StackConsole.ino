@@ -22,43 +22,62 @@
 #include <Preferences.h>
 #include "Clock.h"
 
+#ifndef MyConfig_PragmaRegion  // fake pragma region (supported in Visual Studio, but not gcc)
+
+// Change to 434.0 or other frequency, must match RX's freq! RadioHead in MHz (e.g. 433); M5 in Hz (e.g. 433E6)
+#define RF95_FREQ 433
+#define DEVICEID "M5"
+
+#ifndef NDEBUG
+#define MAIN_SERIAL=1
+#endif // !NDEBUG
+
+#define MyConfig_PragmaRegion
+#endif 
+
+#ifndef PINDEFS_PragmaRegion  // fake pragma region (supported in Visual Studio, but not gcc)
+// -------------------------------------------------------------------------------------------------------------------------------------
+// M5Stack LoRa pin defs from M5Lora.h (Sandeep Mistry library)
 // these INCORRECT defs can be found in LoRaReceiver example code for M5Stack in config.h
-// 
+// -------------------------------------------------------------------------------------------------------------------------------------
 //#define LORA_CS_PIN   5
 //#define LORA_RST_PIN  26
-//#define LORA_IRQ_PIN  36 //
+//#define LORA_IRQ_PIN  36 // not actually used; registers are polled, not interrupt driven in this release of Sandeep
+
+// -------------------------------------------------------------------------------------------------------------------------------------
+// Actual RadioHead defs for M5Stack - NOTE some documentation incorrectly reversed the labels for RST & IRQ
+// -------------------------------------------------------------------------------------------------------------------------------------
+#define RFM95_CS 5   // LORA_CS_PIN
+#define RFM95_RST 36 // LORA_RST_PIN is 36, TODO but it is read-only! so we'll need to short to another pin
+#define RFM95_INT 26 // M5 LORA_IRQ_PIN 36 (jumper to 16)
+//#define LORA_DEFAULT_DIO0_PIN  26 
+#define TEST_GPIO (39) // 39 = button A; Lora Int = 36.
+
+
+// -------------------------------------------------------------------------------------------------------------------------------------
+//  ESP32 feather w/wing  see https://github.com/adafruit/RadioHead/blob/master/examples/feather/Feather9x_TX/Feather9x_TX.ino#L56
+// -------------------------------------------------------------------------------------------------------------------------------------
+// #define RFM95_RST     27   // "A"
+// #define RFM95_CS      33   // "B"
+// #define RFM95_INT     12   //  next to A
+#define PINDEFS_PragmaRegion
+#endif 
+
+
+
 
 // Stock font and GFXFF reference handle
 #define GFXFF 1
 #define FF18 &FreeSans12pt7b
 
-#define DEVICEID "M5"
-
 Clock myClock;
-
-/* M5Stack LoRa pin defs from M5Lora.h (Sandeep Mistry library) */
-//#define LORA_DEFAULT_SS_PIN    5
-//#define LORA_DEFAULT_RESET_PIN 26  
-//#define LORA_DEFAULT_DIO0_PIN  36 // not actually used; registers are polled, not interrupt driven in this release of Sandeep
-
-// RadioHead defs for M5Stack - NOTE some documentation incorrectly reversed the labels for RST & IRQ
-#define RFM95_CS 5   // LORA_CS_PIN
-#define RFM95_RST 36 // LORA_RST_PIN is 36, TODO but it is read-only! so we'll need to short to another pin
-#define RFM95_INT 26 // M5 LORA_IRQ_PIN 36 (jumper to 16)
-
-//  ESP32 feather w/wing  see https://github.com/adafruit/RadioHead/blob/master/examples/feather/Feather9x_TX/Feather9x_TX.ino#L56
-// #define RFM95_RST     27   // "A"
-// #define RFM95_CS      33   // "B"
-// #define RFM95_INT     12   //  next to A
-
-
-// Change to 434.0 or other frequency, must match RX's freq!
-#define RF95_FREQ 433
-// RadioHead in MHz, M5 in Hz (e.g. 433E6)
-
 
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
+
+// wifi config store
+Preferences preferences;
+
 
 // TODO - determine if RAM attributes are really needed for IRQs on ESP32
 //static DRAM_ATTR   
@@ -86,10 +105,7 @@ void buttons_test() {
 	}
 }
 
-// wifi config store
-Preferences preferences;
 
-#define TEST_GPIO (39) // 39 = button A; Lora Int = 36.
 void setup() {
 	delay(100);
 	// see https://www.aliexpress.com/store/product/M5Stack-Official-Stock-Offer-LoRa-Module-for-ESP32-DIY-Development-Kit-Wireless-433MHz-Built-in-Antenna/3226069_32839736315.html
@@ -106,6 +122,9 @@ void setup() {
 	Serial.begin(115200); // Serial.begin after M5.begin
 	delay(100);
 
+#ifdef ESP32_JS_WOW
+	Serial.println("ESP32_JS_WOW");
+#endif
 
 	//int _interruptPin = TEST_GPIO;
 	//int interruptNumber = digitalPinToInterrupt(_interruptPin);
@@ -271,16 +290,16 @@ void operationMessage(char * msg) {
 
 void buttonsProcess() {
 	if (M5.BtnA.wasPressed()) {
-		operationMessage("Button A");
+		operationMessage((char*)"Button A");
 	}
 
 	if (M5.BtnB.wasPressed()) {
 		M5.Lcd.clearDisplay();
-		operationMessage("Refresh");
+		operationMessage((char*)"Refresh");
 	}
 
 	if (M5.BtnC.wasPressed()) {
-		operationMessage("Button C");
+		operationMessage((char*)"Button C");
 	}
 }
 
@@ -297,43 +316,18 @@ void checkPacketReceipt(int timeToWait) {
 	delay(10);  // ms delay; Receiver Startup Time 250.0 kHz = 63us; 2.5kHz = 2.33 ms
                 // TS_RE or later after setting the device in Receive mode, any incoming packet will be detected and demodulated by the transceiver.
 	yield();
-	int x = 0;
-	// try to parse packet
-	//M5.Lcd.setCursor(0, 160);
-	//char msg[20] = "";
-	//int ptr = 0;
-	//char thisDevice[20];
-
-	//// This is Sandeep Mistry library code
-	////int packetSize = LoRa.parsePacket();
-	////if (packetSize) {
-	////	// read packet
-	////	while (LoRa.available()) {
-	////		char ch = (char)LoRa.read();
-	////		if (ch > 0) {
-	////			msg[ptr] = ch;
-	////			ptr++;
-	////		}
-	////	}
-	////	msg[ptr] = 0;
-
-	////}
-
 
 	Serial.print("Waiting checkPacketReceipt...");
 	if (rf95.waitAvailableTimeout(timeToWait))
 	{
-		x = 0;
 		Serial.println("Available! ");
 		if (isMessageReceived())
 		{
-			//digitalWrite(LED, HIGH);
-			//RH_RF95::printBuffer("Received: ", buf, len);
 			Serial.print("Got: ");
 			Serial.println((char*)buf);
 			Serial.print("RSSI: ");
 			Serial.println(rf95.lastRssi(), DEC);
-			operationMessage( (char*)buf);
+			operationMessage((char*)buf);
 			// Send a reply
 			//delay(200); // TODO may or may not be needed
 			//uint8_t data[] = "And hello back to you";
@@ -353,8 +347,6 @@ void checkPacketReceipt(int timeToWait) {
 	}
 	else
 	{
-		//notCount++;
-		//Serial.print(notCount);
 		Serial.println(" Not Available! ");
 	}
 
