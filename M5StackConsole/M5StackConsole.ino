@@ -12,6 +12,7 @@
 // TODO - investigate TCXO install / enable mode
 
 
+#include "GateState.h"
 #include <M5Stack.h>
 // #include <M5LoRa.h> // due to naming (and probably hardware!) conflicts, we cannot use both M5LoRa and RadioHead concurrently
 #include <SPI.h>
@@ -78,6 +79,7 @@ RH_RF95 rf95(RFM95_CS, RFM95_INT);
 // wifi config store
 Preferences preferences;
 
+GateState myGate;
 
 // TODO - determine if RAM attributes are really needed for IRQs on ESP32
 //static DRAM_ATTR   
@@ -94,6 +96,7 @@ void buttons_test() {
 	if (M5.BtnA.wasPressed()) {
 		M5.Lcd.printf("A");
 		Serial.printf("A");
+		myGate.buttonPress();
 	}
 	if (M5.BtnB.wasPressed()) {
 		M5.Lcd.printf("B");
