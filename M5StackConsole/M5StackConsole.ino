@@ -92,22 +92,6 @@ void myISR() {
 	thisIndex++;
 }
 
-void buttons_test() {
-	if (M5.BtnA.wasPressed()) {
-		M5.Lcd.printf("A");
-		Serial.printf("A");
-		myGate.buttonPress();
-	}
-	if (M5.BtnB.wasPressed()) {
-		M5.Lcd.printf("B");
-		Serial.printf("B");
-	}
-	if (M5.BtnC.wasPressed()) {
-		M5.Lcd.printf("C");
-		Serial.printf("C");
-	}
-}
-
 
 void setup() {
 	delay(100);
@@ -117,12 +101,12 @@ void setup() {
 	// M5Stack LorRa init
 	pinMode(5, OUTPUT);
 	digitalWrite(5, HIGH);
-	M5.begin();
+	M5.begin(false);
 	preferences.end();
 
 
 	while (!Serial);
-	Serial.begin(115200); // Serial.begin after M5.begin
+	Serial.begin(19200); // Serial.begin after M5.begin 19200 or 57600 for debugging with Visual Micro; see http://www.visualmicro.com/forums/YaBB.pl?num=1365950696
 	delay(100);
 
 #ifdef ESP32_JS_WOW
@@ -273,7 +257,7 @@ void setup() {
 
 
 
-void operationMessage(char * msg) {
+void operationMessage(String msg) {
 	int xpos = 0;
 	int ypos = 85; // Top left corner of Operation text, about half way down = 85
 
@@ -290,10 +274,30 @@ void operationMessage(char * msg) {
 
 }
 
+//void buttons_test() {
+//	if (M5.BtnA.wasPressed()) {
+//		M5.Lcd.printf("A");
+//		Serial.printf("A");
+//		myGate.buttonPress();
+//		Serial.println(myGate.StateMessage());
+//	}
+//	if (M5.BtnB.wasPressed()) {
+//		M5.Lcd.printf("B");
+//		Serial.printf("B");
+//	}
+//	if (M5.BtnC.wasPressed()) {
+//		M5.Lcd.printf("C");
+//		Serial.printf("C");
+//	}
+//}
+
+
 
 void buttonsProcess() {
 	if (M5.BtnA.wasPressed()) {
-		operationMessage((char*)"Button A");
+		operationMessage(myGate.StateMessage());
+		myGate.buttonPress();
+		Serial.println(myGate.StateMessage());
 	}
 
 	if (M5.BtnB.wasPressed()) {
@@ -320,7 +324,7 @@ void checkPacketReceipt(int timeToWait) {
                 // TS_RE or later after setting the device in Receive mode, any incoming packet will be detected and demodulated by the transceiver.
 	yield();
 
-	Serial.print("Waiting checkPacketReceipt...");
+	// Serial.print("Waiting checkPacketReceipt...");
 	if (rf95.waitAvailableTimeout(timeToWait))
 	{
 		Serial.println("Available! ");
@@ -330,6 +334,25 @@ void checkPacketReceipt(int timeToWait) {
 			Serial.println((char*)buf);
 			Serial.print("RSSI: ");
 			Serial.println(rf95.lastRssi(), DEC);
+			String str = (char*)buf;
+			//str = str.substring(2, str.length() - 2);
+			//Serial.print(" String length=");
+			Serial.println(str);
+
+			Serial.println(str.length());
+
+			if (myGate.getCurrentState() ==  myGate.UNKNOWN) {
+				if (str == "M5 Closed") {
+					myGate.setCurrentState(myGate.CLOSED);
+				}
+				else if (str == "M5 Open") {
+					myGate.setCurrentState(myGate.CLOSED);
+				}
+				else {
+					// other message
+				}
+
+			}
 			operationMessage((char*)buf);
 			// Send a reply
 			//delay(200); // TODO may or may not be needed
@@ -350,7 +373,7 @@ void checkPacketReceipt(int timeToWait) {
 	}
 	else
 	{
-		Serial.println(" Not Available! ");
+		// Serial.println(" No Data Available! ");
 	}
 
 
@@ -385,8 +408,11 @@ void checkPacketReceipt(int timeToWait) {
 	delay(10);
 }
 
-
+ 
 int lastCountInterrupt = 0;
+int intThisEventCount = 0;
+int intLastEventCount = 0;
+
 void loop() {
 	//if (thisIndex != lastIndex) {
 	//	Serial.print(thisIndex);
@@ -399,7 +425,7 @@ void loop() {
 	//	Serial.println("RH_95 Interrupt!");
 	//	lastCountInterrupt = rf95.countInterrupt();
 	//}
-	buttons_test();
+	// buttons_test();
 
 	// Serial.println(digitalRead(TEST_GPIO));
 	myClock.refreshDisplay();
@@ -412,27 +438,32 @@ void loop() {
 	yield();
 
 	M5.update();
-	Serial.print(":: txGood: ");
-	Serial.println(rf95.txGood(), DEC);
-	
-	Serial.print(":: rxBad: ");
-	Serial.println(rf95.rxBad(), DEC);
-	Serial.print(":: rxInvalid: ");
-	Serial.println(rf95.rxInvalid(), DEC);
 
-	Serial.print(":: rxGood: ");
-	Serial.println(rf95.rxGood(), DEC);
+	intThisEventCount = rf95.txGood() + rf95.rxBad() + rf95.rxInvalid() + rf95.rxGood();
+	if (intThisEventCount != intLastEventCount) {
+		Serial.print(":: txGood: ");
+		Serial.println(rf95.txGood(), DEC);
 
-	//Serial.print("0x");
-	//Serial.print(rf95.readRegister((uint8_t)0x1d), HEX);
-	//Serial.print(", 0x");
-	//Serial.print(rf95.readRegister((uint8_t)0x1e), HEX);
-	//Serial.print(", 0x");
-	//Serial.print(rf95.readRegister((uint8_t)0x26), HEX);
+		Serial.print(":: rxBad: ");
+		Serial.println(rf95.rxBad(), DEC);
+		Serial.print(":: rxInvalid: ");
+		Serial.println(rf95.rxInvalid(), DEC);
 
-	Serial.println();
-	Serial.println("*********************************************");
-	Serial.println("  LOOP!");
-	Serial.println("*********************************************");
-	Serial.println();
+		Serial.print(":: rxGood: ");
+		Serial.println(rf95.rxGood(), DEC);
+		//Serial.print("0x");
+		//Serial.print(rf95.readRegister((uint8_t)0x1d), HEX);
+		//Serial.print(", 0x");
+		//Serial.print(rf95.readRegister((uint8_t)0x1e), HEX);
+		//Serial.print(", 0x");
+		//Serial.print(rf95.readRegister((uint8_t)0x26), HEX);
+
+		Serial.println();
+		Serial.println("*********************************************");
+		Serial.println("  LOOP!");
+		Serial.println("*********************************************");
+		Serial.println();
+		intLastEventCount = intThisEventCount;
+	}
+	yield();
 }

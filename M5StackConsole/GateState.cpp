@@ -40,7 +40,7 @@ GateState::GateStateChoice GateState::buttonPress()
 	}
 	else if (_currentGateState == REVERSED_WHILE_CLOSING) // aka opening
 	{
-		_currentGateState = REVERSED_WHILE_CLOSING// aka opening
+		_currentGateState = REVERSED_WHILE_CLOSING; // aka opening
 	}
 	else if (_currentGateState == CLOSED)
 	{
@@ -53,7 +53,11 @@ GateState::GateStateChoice GateState::buttonPress()
 	return _currentGateState;
 }
 
-String GateState::StateMessage(String language = "EN") {
+String GateState::StateMessage() {
+	return StateMessage(DEFAULT_LANGUAGE);
+}
+
+String GateState::StateMessage(String language) {
 	String msg = "unknown";
 	if (_currentGateState == UNKNOWN) {
 		msg = "unknown";
@@ -100,6 +104,10 @@ String GateState::StateMessage(String language = "EN") {
 
 GateState::GateStateChoice GateState::getCurrentState() {
 	return _currentGateState;
+}
+
+void GateState::setCurrentState(GateStateChoice newGateState) {
+	_currentGateState = newGateState;
 }
 
 void GateState::refresh() {
