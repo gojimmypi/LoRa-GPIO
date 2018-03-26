@@ -13,11 +13,13 @@
 class GateState
 {
 public:
+	const String DEFAULT_LANGUAGE = "EN";
 	GateState();
 
 	void refresh();
 
-	String StateMessage(String language = "EN");
+	String StateMessage(String language);
+	String StateMessage();
 
 	typedef enum
 	{
@@ -33,6 +35,7 @@ public:
 	} GateStateChoice;
 
 	GateStateChoice getCurrentState();
+	void setCurrentState(GateStateChoice newGateState);
 
 	GateStateChoice buttonPress(); // tell the state engine that a button press has occured and return the expected new state 
 

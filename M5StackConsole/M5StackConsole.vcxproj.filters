@@ -30,6 +30,9 @@
     <ClInclude Include="GateState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GateState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Clock.cpp">
