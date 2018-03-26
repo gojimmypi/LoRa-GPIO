@@ -18,18 +18,24 @@
     <None Include="M5StackConsole.ino" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="__vm\.M5StackConsole.vsarduino.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Clock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="__vm\.M5StackConsole.vsarduino.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GateState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Clock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GateState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -120,6 +120,12 @@ void setup() {
 	M5.begin();
 	preferences.end();
 
+	WiFi.begin();
+	WiFi.persistent(false); // Setting persistent to false will get SSID / password written to flash only if currently used values do not match what is already stored in flash.
+	                        // see http://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/generic-class.html#persistent
+
+	WiFi.forceSleepBegin();
+	WiFi.mode(WIFI_OFF); // if we're no using WiFi, turn it off
 
 	while (!Serial);
 	Serial.begin(115200); // Serial.begin after M5.begin
@@ -305,6 +311,8 @@ void buttonsProcess() {
 		operationMessage((char*)"Button C");
 	}
 }
+
+
 
 // Should be a message for us now   
 uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
