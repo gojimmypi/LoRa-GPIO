@@ -50,6 +50,7 @@ GateState::GateStateChoice GateState::buttonPress()
 	{
 		_currentGateState == UNKNOWN;
 	}
+    // TODO check time since last press
 	return _currentGateState;
 }
 
