@@ -62,6 +62,10 @@
 
 #define LED 13 // Blinky on receipt
 #define GATE 23 // aka A5 aka 41 aka PF0 
+#define GATE_OPEN_SENSOR 23  // aka A5  aka 41 aka PF0
+#define GATE_CLOSE_SENSOR 22 // aka A4  aka 40 aka PF1
+#define REMOTE_BP1 6         // aka PD7 aka 27 aka T0, labeled on board as 6
+#define REMOTE_BP2 12        // aka PD6 aka 26 aka T1, labeled on board as 12
 
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
@@ -82,6 +86,24 @@ int isGateOpen() {
 	return a;
 }
 
+const int RADIO_PACKET_SIZE = 20;
+char radiopacket[20];// = "Hello World #      ";;
+unsigned long SendUpdate_Timeout;
+unsigned const long SEND_UPDATE_TIMEOUT_MILLISECONDS = 10000;
+
+bool ReadyTxRefresh() {
+#ifdef TIMER_DEBUG
+    if ((millis() - timerRefresh) > 1000) {
+        // Serial.print("Ready in: ");
+        Serial.print((int)((DATA_REFRESH_INTERVAL - (millis() - timeoutDashboardDataRefresh)) / 1000));
+        Serial.print(".");
+        timerRefresh = millis();
+    }
+#endif
+    return ((millis() - SendUpdate_Timeout) > SEND_UPDATE_TIMEOUT_MILLISECONDS);
+}
+
+
 void setup()
 {
 	delay(250);
@@ -96,14 +118,21 @@ void setup()
 // #endif
 
 
-	// LoRa32u4 init
+	// LoRa32u4 GPIO init
 	pinMode(LED, OUTPUT);
 	pinMode(GATE, INPUT);
+    pinMode(REMOTE_BP1, OUTPUT);
+    pinMode(REMOTE_BP2, OUTPUT);
 
-	pinMode(RFM95_RST, OUTPUT);
+    // both Remote lines BP1 and BP2 are set to low (off)
+    digitalWrite(REMOTE_BP1, LOW);
+    digitalWrite(REMOTE_BP2, LOW);
+
+     // LoRa init 
+    pinMode(RFM95_RST, OUTPUT);
 	digitalWrite(RFM95_RST, HIGH);
 
-	// manual reset
+	// manual reset of LoRa
 	digitalWrite(RFM95_RST, LOW);
 	delay(10);
 	digitalWrite(RFM95_RST, HIGH);
@@ -132,68 +161,100 @@ void setup()
 	rf95.setTxPower(23, false);
 	delay(250);
 
+    SendUpdate_Timeout = millis();
+
 }
 
 int16_t packetnum = 0;  // packet counter, we increment per xmission
+                        // Should be a message for us now   
+uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+uint8_t len = sizeof(buf);
 
+bool isMessageReceived() {
+    return rf95.recv(buf, &len);
+}
+
+
+void SendUpdate() {
+    //Serial.println("Sending to rf95_server");
+    // Send a message to rf95_server
+    //                   12345678901234567890
+    if (ReadyTxRefresh()) {
+        rf95.setModeTx();
+        if (isGateOpen()) {
+            Serial.println("Open!");
+            // digitalWrite(REMOTE_BP2, HIGH);
+            strncpy(radiopacket, DEVICEID" Open" + '\0', RADIO_PACKET_SIZE);
+        }
+        else {
+            Serial.println("Close!");
+            // digitalWrite(REMOTE_BP2, LOW);
+            strncpy(radiopacket, DEVICEID" Closed" + '\0', RADIO_PACKET_SIZE);
+        }
+        //char radiopacket[20] = "Hello World #      ";
+
+        itoa(packetnum++, radiopacket + 13, 10);
+        Serial.print("Sending "); Serial.println(radiopacket);
+        radiopacket[19] = 0;
+
+        Serial.print("Millis = ");
+        Serial.println(millis());
+        delay(10);
+        rf95.send((uint8_t *)radiopacket, 20);
+
+        Serial.println("Waiting for packet to complete..."); delay(10);
+
+        if (rf95.waitPacketSent(1000)) {
+            Serial.println("Packet send complete!"); delay(10);
+            Serial.print("Millis = "); Serial.println(millis());
+            Serial.println(millis());
+        }
+        else
+        {
+            // gave up waiting for packet to complete
+            Serial.println("Packet FAILED to complete!"); delay(10);
+        }
+        SendUpdate_Timeout = millis();
+    }
+    else {
+        yield();
+    }
+
+
+}
+
+uint8_t rx_buf[RH_RF95_MAX_MESSAGE_LEN];
+uint8_t rx_len = sizeof(rx_buf);
+uint8_t * interim_len;
 void loop()
 {
-	//Serial.println("Sending to rf95_server");
-	// Send a message to rf95_server
-	//                   12345678901234567890
+    SendUpdate();
 
-	const int RADIO_PACKET_SIZE = 20;
-	char radiopacket[20];// = "Hello World #      ";;
-	
-	if (isGateOpen()) {
-		strncpy(radiopacket, DEVICEID" Open" + '\0', RADIO_PACKET_SIZE);
-	}
-	else {
-		strncpy(radiopacket, DEVICEID" Closed" + '\0', RADIO_PACKET_SIZE);
-	}
-	//char radiopacket[20] = "Hello World #      ";
+    // Now wait for a reply
+    rf95.setModeRx();
 
-	itoa(packetnum++, radiopacket + 13, 10);
-	Serial.print("Sending "); Serial.println(radiopacket);
-	radiopacket[19] = 0;
-
-	//Serial.println("Sending..."); delay(10);
-	rf95.send((uint8_t *)radiopacket, 20);
-
-	Serial.println("Waiting for packet to complete..."); delay(10);
-
-	if (rf95.waitPacketSent(1000)) {
-		Serial.println("Packet send complete!"); delay(10);
-	}
-	else
-	{
-		// gave up waiting for packet to complete
-		Serial.println("Packet FAILED to complete!"); delay(10);
-	}
-	// Now wait for a reply
-	uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
-	uint8_t len = sizeof(buf);
-
-	//Serial.println("Waiting for reply..."); delay(10);
-	if (rf95.waitAvailableTimeout(1000))
-	{
-		// Should be a reply message for us now   
-		if (rf95.recv(buf, &len))
-		{
-			//Serial.print("Got reply: ");
-			//Serial.println((char*)buf);
-			//Serial.print("RSSI: ");
-			//Serial.println(rf95.lastRssi(), DEC);    
-		}
-		else
-		{
-			//Serial.println("Receive failed");
-		}
-	}
-	else
-	{
-		//Serial.println("No reply, is there a listener around?");
-	}
-	delay(1000);
+    //Serial.println("Waiting for reply..."); delay(10);
+    //if (rf95.recv(rx_buf, interim_len)) {
+    //    Serial.println("Reply!...");
+    //    if (rf95.waitAvailableTimeout(1000))
+    //    {
+            // Should be a reply message for us now   
+            if (rf95.recv(rx_buf, &rx_len))
+            {
+                Serial.print("Got reply: ");
+                Serial.println((char*)rx_buf);
+                Serial.print("RSSI: ");
+                Serial.println(rf95.lastRssi(), DEC);
+            }
+            else
+            {
+                yield();
+            }
+        //}
+        //else
+        //{
+        //    Serial.println("No reply, is there a listener around?");
+        //}
+    //}
 }
 
