@@ -16,6 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Device.ino" />
+    <None Include=".gitignore" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.Device.vsarduino.h">
