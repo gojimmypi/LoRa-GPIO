@@ -108,7 +108,7 @@ void setup() {
 	WiFi.persistent(false); // Setting persistent to false will get SSID / password written to flash only if currently used values do not match what is already stored in flash.
 	                        // see http://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/generic-class.html#persistent
 
-	WiFi.forceSleepBegin();
+	// WiFi.forceSleepBegin(); // what happened to this feature? no longer available?
 	WiFi.mode(WIFI_OFF); // if we're no using WiFi, turn it off
 
 	while (!Serial);
@@ -311,9 +311,22 @@ void buttonsProcess() {
 		operationMessage((char*)"Refresh");
 	}
 
-	if (M5.BtnC.wasPressed()) {
-		operationMessage((char*)"Button C");
-	}
+    if (M5.BtnC.wasPressed()) {
+        operationMessage((char*)"Button C");
+        uint8_t data[] = "Click";
+        rf95.setModeTx();
+        rf95.send(data, sizeof(data));
+        if (rf95.waitPacketSent(1000)) {
+            Serial.println("Packet send complete!"); delay(10);
+            Serial.print("Millis = "); Serial.println(millis());
+            Serial.println(millis());
+        }
+        else
+        {
+            // gave up waiting for packet to complete
+        }
+        rf95.setModeIdle();
+    }
 }
 
 
@@ -354,7 +367,7 @@ void checkPacketReceipt(int timeToWait) {
 					myGate.setCurrentState(myGate.CLOSED);
 				}
 				else if (str == "M5 Open") {
-					myGate.setCurrentState(myGate.CLOSED);
+					myGate.setCurrentState(myGate.OPEN);
 				}
 				else {
 					// other message
