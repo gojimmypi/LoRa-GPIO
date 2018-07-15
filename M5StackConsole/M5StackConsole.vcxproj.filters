@@ -24,13 +24,13 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GateState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GateState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="__vm\.M5StackConsole.vsarduino.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GateState.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GateState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -46,5 +46,11 @@
     <ResourceCompile Include="M5StackConsole.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="__vm\Compile.vmps.xml" />
+    <Xml Include="__vm\Configuration.Debug.vmps.xml" />
+    <Xml Include="__vm\Configuration.Release.vmps.xml" />
+    <Xml Include="__vm\Upload.vmps.xml" />
   </ItemGroup>
 </Project>
