@@ -61,7 +61,7 @@
 // Change to 434.0 or other frequency, must match RX's freq!
 // ETSI has defined 433 to 434 MHz frequency band for LoRa application. It uses 433.175 MHz, 433.375 MHz and 433.575 MHz frequency channels.
 // see http://www.rfwireless-world.com/Tutorials/LoRa-frequency-bands.html
-#define RF95_FREQ 433.375
+#define RF95_FREQ 433.0
 
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
@@ -78,6 +78,7 @@ int isGateOpen() {
 
 void setup()
 {
+	delay(250);
 	pinMode(GATE, INPUT);
 
 	pinMode(LED, OUTPUT);
@@ -100,6 +101,7 @@ void setup()
 		Serial.println("LoRa radio init failed");
 		while (1);
 	}
+	delay(250);
 	Serial.println("LoRa radio init OK!");
 
 	// Defaults after init are 434.0MHz, modulation GFSK_Rb250Fd250, +13dbM
@@ -107,6 +109,7 @@ void setup()
 		Serial.println("setFrequency failed");
 		while (1);
 	}
+	delay(250);
 	Serial.print("Set Freq to: "); Serial.println(RF95_FREQ);
 
 	// Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
@@ -115,6 +118,7 @@ void setup()
 	// If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then 
 	// you can set transmitter powers from 5 to 23 dBm:
 	rf95.setTxPower(23, false);
+	delay(250);
 }
 int x = 0;
 
