@@ -313,7 +313,7 @@ void buttonsProcess() {
 
     if (M5.BtnC.wasPressed()) {
         operationMessage((char*)"Button C");
-        uint8_t data[] = "Click";
+        uint8_t data[] = "Click1";
         rf95.setModeTx();
         rf95.send(data, sizeof(data));
         if (rf95.waitPacketSent(1000)) {
