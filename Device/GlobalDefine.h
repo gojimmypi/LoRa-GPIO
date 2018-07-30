@@ -45,7 +45,7 @@
 #define HEAP_DEBUG // when defined, display diagnostic heap info
 #define HARDWARE_DEBUG
 // #define SPIFFS_DEBUG
-#define SENSOR_DEBUG
+// #define SENSOR_DEBUG
 #define LORA_DEBUG
 #define LORA_MESSAGE_DEBUG
 

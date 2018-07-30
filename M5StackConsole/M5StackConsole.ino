@@ -297,7 +297,21 @@ void operationMessage(String msg) {
 //	}
 //}
 
-
+void SendACK() {
+    const uint8_t data[] = "ACK";
+    rf95.setModeTx();
+    rf95.send(data, sizeof(data));
+    if (rf95.waitPacketSent(1000)) {
+        Serial.println("ACK Packet send complete!"); delay(10);
+        Serial.print("Millis = "); Serial.println(millis());
+        Serial.println(millis());
+    }
+    else
+    {
+        // gave up waiting for packet to complete
+    }
+    rf95.setModeIdle();
+}
 
 void buttonsProcess() {
 	if (M5.BtnA.wasPressed()) {
@@ -361,6 +375,9 @@ void checkPacketReceipt(int timeToWait) {
 			Serial.println(str);
 
 			Serial.println(str.length());
+
+            delay(10);
+            SendACK();
 
 			if (myGate.getCurrentState() ==  myGate.UNKNOWN) {
 				if (str == "M5 Closed") {

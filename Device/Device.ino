@@ -1,6 +1,8 @@
 // Similar to 32u4 w/ra02 LoRA see https://learn.adafruit.com/adafruit-feather-32u4-radio-with-lora-radio-module/using-the-rfm-9x-radio
 // Gate COM8 (to left as viewed from front)
 
+#include "GateOpened.h"
+#include "GateClosed.h"
 #include <SPI.h>
 #include <RH_RF95.h>
 
@@ -13,8 +15,6 @@
 // see https ://github.com/gojimmypi/LoRa-GPIO/blob/master/doc/DIY0031-LoRa32u4%20pinout%20diagram.pdf
 // the values here are the bluish-gray "Arduino Pin" numbers, second column out from board
 #define LED 13 // Blinky on receipt
-#define GATE_OPENED_SENSOR 23  // aka ADC0 aka 41 aka PF0, labeled on board as A5
-#define GATE_CLOSED_SENSOR 22  // aka ADC1 aka 40 aka PF1, labeled on board as A4
 #define REMOTE_BP1 6           // aka PD7  aka 27 aka T0, labeled on board as 6
 #define REMOTE_BP2 12          // aka PD6  aka 26 aka T1, labeled on board as 12
 
@@ -24,9 +24,15 @@ char tx_buf[20]; // our transmit message buffer
 
 unsigned long timerRefresh = 0;   // the dynamic counter refresh; are we ready to display the countdown? (typically updated every second)
 unsigned long SendUpdate_Timeout; // the dynamic counter refresh for actually sending the update
-unsigned const long SEND_UPDATE_TIMEOUT_MILLISECONDS = 10000; // how many miliseconds between sendinng LoRa gate status? TODO, this should be more flexible: frequent during opening and closing.... infrequent when idle
+unsigned long Rx_SendUpdate_ACK_Timeout; // the dynamic counter refresh for resending if no ACK received
+unsigned int SendUpdate_Repeat_Counter = 0;
+bool isWaitingOnAck = false;
 
-/* for feather32u4 */
+unsigned const long SEND_UPDATE_TIMEOUT_MILLISECONDS = 100000; // how many miliseconds between sendinng LoRa gate status? TODO, this should be more flexible: frequent during opening and closing.... infrequent when idle
+unsigned const long RX_SEND_UPDATE_ACK_TIMEOUT_MILLISECONDS = 2000; // we expected to receive an ACK to our update sent, if not, resend it with this frequency
+unsigned const int SEND_UPDATE_REPEAT_MAX = 3; // howc many additional messages will be sent if the first one is not acknowledged
+
+                                               /* for feather32u4 */
 #define RFM95_CS 8
 #define RFM95_RST 4
 #define RFM95_INT 7
@@ -96,25 +102,41 @@ void blinkLED(int duration) {
 	digitalWrite(RFM95_RST, LOW);
 }
 
+
+
+
+
 //*******************************************************************************************************************************************
-// read sensor and return status of [gate fully opened] sensor
+// reset our counter for how often we actually send messages; set to current millis() value
 //*******************************************************************************************************************************************
-int isGateOpened() {
-	int a = digitalRead(GATE_OPENED_SENSOR);
-    SENSOR_DEBUG_PRINTLN(a);
-	return a;
+void Reset_SendUpdate_Timeout() {
+    Serial.println(">> Reset_SendUpdate_Timeout");
+
+    SendUpdate_Timeout = millis(); 
+    Rx_SendUpdate_ACK_Timeout = millis();
 }
 
 //*******************************************************************************************************************************************
-// read sensor and return status of [gate fully closed] sensor
+// if no Ack to our last send was received, resend it ever [RX_SEND_UPDATE_ACK_TIMEOUT_MILLISECONDS] milliseconds (typically 2 - 5 seconds)
 //*******************************************************************************************************************************************
-int isGateClosed() {
-    int a = digitalRead(GATE_CLOSED_SENSOR);
-    SENSOR_DEBUG_PRINTLN(a);
-    return a;
+bool ReadyTxRepeat() {
+    bool res;
+    if (isWaitingOnAck) {
+        if (SendUpdate_Repeat_Counter > SEND_UPDATE_REPEAT_MAX) {
+            Serial.println(">> ReadyTxRepeat reset");
+            Reset_SendUpdate_Timeout();
+            SendUpdate_Repeat_Counter = 0;
+            res = false; // we're never ready when we've sent too many repeats
+        }
+        else {
+            res = ((millis() - Rx_SendUpdate_ACK_Timeout) > RX_SEND_UPDATE_ACK_TIMEOUT_MILLISECONDS);
+        }
+    }
+    else {
+        res = false;
+    }
+    return res;
 }
-
-
 //*******************************************************************************************************************************************
 // 
 //*******************************************************************************************************************************************
@@ -127,8 +149,16 @@ bool ReadyTxRefresh() {
         timerRefresh = millis();
     }
 #endif
-    return ((millis() - SendUpdate_Timeout) > SEND_UPDATE_TIMEOUT_MILLISECONDS);
+    if (isGateOpenedChange() || isGateClosedChange() || ReadyTxRepeat() ) {
+        Serial.println("ReadyTxRefresh true");
+        Reset_SendUpdate_Timeout();
+        return true;
+    }
+    else {
+        return ((millis() - SendUpdate_Timeout) > SEND_UPDATE_TIMEOUT_MILLISECONDS);
+    }
 }
+
 
 //*******************************************************************************************************************************************
 // returns true if a message has been received
@@ -159,11 +189,20 @@ void PressButton(uint8_t thisGPIO) {
 
 
 //*******************************************************************************************************************************************
-// SendUpdate; here we transmit the current gate status to home console on a perioud basis (see ReadyTxRefresh)
+// SendUpdate; here we transmit the current gate status to home console on a periodic basis (see ReadyTxRefresh)
+// note that ReadyTxRefresh may be ready sooner than polling period, if a gate state change is detected
 //*******************************************************************************************************************************************
 void SendUpdate() {
     if (ReadyTxRefresh()) {
-        int TransmitStartTime = millis();
+        if (isWaitingOnAck) {
+            SendUpdate_Repeat_Counter++;
+            Serial.print("Sending REPEAT message! ");
+            Serial.println(SendUpdate_Repeat_Counter);
+        }
+        else {
+            Serial.println("not a repeat");
+        }
+        unsigned long TransmitStartTime = millis();
         LORA_DEBUG_PRINTLN("Sending to rf95 message!");
         rf95.setModeTx();
         if (isGateOpened()) {
@@ -183,8 +222,18 @@ void SendUpdate() {
         rf95.send((uint8_t *)tx_buf, 20);
 
         LORA_DEBUG_PRINTLN("Waiting for packet to complete..."); delay(10);
-
+        yield();
         if (rf95.waitPacketSent(1000)) {
+            Serial.print("isWaitingOnAck ="); 
+            Serial.println(isWaitingOnAck);
+            if (SendUpdate_Repeat_Counter < SEND_UPDATE_REPEAT_MAX) {
+                isWaitingOnAck = true;
+            }
+            else {
+                SendUpdate_Repeat_Counter = 0;
+                isWaitingOnAck = false;
+
+            }
             LORA_DEBUG_PRINTLN("Packet send complete!");
             LORA_DEBUG_PRINT("rf95.waitPacketSent = "); LORA_DEBUG_PRINT(millis() - TransmitStartTime); LORA_DEBUG_PRINTLN("ms. ");
         }
@@ -193,7 +242,13 @@ void SendUpdate() {
             // gave up waiting for packet to complete
             LORA_DEBUG_PRINTLN("Packet FAILED to complete!"); delay(10);
         }
-        SendUpdate_Timeout = millis(); // reset our counter for how often we actually send messages
+
+        if (!isWaitingOnAck) {
+            Serial.print("no waiting on ack, reset");
+            Reset_SendUpdate_Timeout(); // SendUpdate_Timeout = millis(); // reset our counter for how often we actually send messages
+        }
+        Serial.println();
+        Serial.println();
     }
     else {
         yield(); // <puff, puff>
@@ -269,12 +324,12 @@ void setup()
 	rf95.setTxPower(23, false);
 	delay(250);
 
-    SendUpdate_Timeout = millis();
+    Reset_SendUpdate_Timeout(); // for setup:  SendUpdate_Timeout = millis(); and Rx_SendUpdate_ACK_Timeout = Millis()
 }
 
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
-// LOOP - main application loop; per periodically sent status and continuously listen for commands to push a button on the remote
+// LOOP - main application loop; periodically sent status and continuously listen for commands to push a button on the remote
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 void loop()
@@ -291,6 +346,7 @@ void loop()
         LORA_MESSAGE_DEBUG_PRINTLN(rf95.lastRssi());
         if (ReceivedMessage("Click1")) {
             PressButton(REMOTE_BP2); // BLOCKING
+
         //if (memcmp(rx_buf, (char*)"Click1", sizeof((char*)"Click1")) == 0) {
             //digitalWrite(REMOTE_BP2, HIGH);
             //delay(BUTTON_PRESS_DURATION); // we're typically waiting 250 ms here BLOCKING
@@ -303,6 +359,9 @@ void loop()
             LORA_MESSAGE_DEBUG_PRINTLN("Clicked Button 2!");
             digitalWrite(REMOTE_BP2, LOW);
         }
+        else if ((char*)rx_buf == (char*)"ACK") {
+            isWaitingOnAck = false;
+        }
         else {
             LORA_MESSAGE_DEBUG_PRINT("Ignored message: ");
             LORA_MESSAGE_DEBUG_PRINTLN((char*)rx_buf);
@@ -310,7 +369,7 @@ void loop()
     }
     else
     {
-        yield(); // <puff, puff>
+        yield(); // <puff, puff />
     }
 }
 

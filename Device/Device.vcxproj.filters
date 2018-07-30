@@ -25,9 +25,21 @@
     <ClInclude Include="GlobalDefine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GateClosed.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GateOpened.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GlobalDefine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GateClosed.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GateOpened.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
