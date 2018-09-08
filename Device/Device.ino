@@ -31,8 +31,8 @@ bool isWaitingOnAck = false;
 unsigned const long SEND_UPDATE_TIMEOUT_MILLISECONDS = 100000; // how many miliseconds between sendinng LoRa gate status? TODO, this should be more flexible: frequent during opening and closing.... infrequent when idle
 unsigned const long RX_SEND_UPDATE_ACK_TIMEOUT_MILLISECONDS = 2000; // we expected to receive an ACK to our update sent, if not, resend it with this frequency
 unsigned const int SEND_UPDATE_REPEAT_MAX = 3; // howc many additional messages will be sent if the first one is not acknowledged
-
-                                               /* for feather32u4 */
+//
+/* for feather32u4 */
 #define RFM95_CS 8
 #define RFM95_RST 4
 #define RFM95_INT 7
@@ -173,7 +173,8 @@ bool isMessageReceived() {
 // ReceivedMessage - return true if the message most recently received is [TheMessage]
 //*******************************************************************************************************************************************
 bool ReceivedMessage(const char * TheMessage) {
-    // do a memory bye compare for the first [length of TheMessage] bytes, return true if equal
+    // do a memory btye compare for the first [length of TheMessage] bytes, return true if equal
+    // TODO determine length of param and compare that!
     return  (memcmp(rx_buf, (char*)TheMessage, sizeof((char*)"Click1")) == 0);
 }
 
@@ -205,13 +206,24 @@ void SendUpdate() {
         unsigned long TransmitStartTime = millis();
         LORA_DEBUG_PRINTLN("Sending to rf95 message!");
         rf95.setModeTx();
+        memset(rx_buf, 0, 20); // clear our receive buffer when sending
+
         if (isGateOpened()) {
             Serial.println("Open!");
             strncpy(tx_buf, DEVICEID" Open" + '\0', RADIO_PACKET_SIZE);
         }
         else {
-            Serial.println("Close!");
-            strncpy(tx_buf, DEVICEID" Closed" + '\0', RADIO_PACKET_SIZE);
+            Serial.println("Not Open!");
+            strncpy(tx_buf, DEVICEID" Not Open" + '\0', RADIO_PACKET_SIZE);
+        }
+
+        if (isGateClosed()) {
+            Serial.println("Closed!!");
+            //strncpy(tx_buf, DEVICEID" Open" + '\0', RADIO_PACKET_SIZE); TODO
+        }
+        else {
+            Serial.println("Not Closed!");
+            //strncpy(tx_buf, DEVICEID" Not Open" + '\0', RADIO_PACKET_SIZE); TODO
         }
 
         itoa(packetnum++, tx_buf + 13, 10);
@@ -242,7 +254,8 @@ void SendUpdate() {
             // gave up waiting for packet to complete
             LORA_DEBUG_PRINTLN("Packet FAILED to complete!"); delay(10);
         }
-
+        memset(tx_buf,0, 20); // clear our transmit buffer after transmit is complete
+        rf95.setModeRx(); // ready to receive
         if (!isWaitingOnAck) {
             Serial.print("no waiting on ack, reset");
             Reset_SendUpdate_Timeout(); // SendUpdate_Timeout = millis(); // reset our counter for how often we actually send messages

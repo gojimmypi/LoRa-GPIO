@@ -14,7 +14,7 @@
 #define GATE_OPENED_SENSOR 23  // aka ADC0 aka 41 aka PF0, labeled on board as A5
 
 bool isGateOpenedChange();
-int isGateOpened();
+bool isGateOpened();
 
 #endif
 

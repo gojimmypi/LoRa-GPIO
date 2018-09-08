@@ -11,7 +11,7 @@
 
 #define GATE_CLOSED_SENSOR 22  // aka ADC1 aka 40 aka PF1, labeled on board as A4
 
-int isGateClosed();
+bool isGateClosed();
 bool isGateClosedChange();
 
 #endif
