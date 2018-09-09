@@ -21,6 +21,9 @@
 #include <ESPmDNS.h>
 #include <WiFiClient.h>
 #include <Preferences.h>
+
+#include "GlobalDefine.h"
+#include "time.h"
 #include "Clock.h"
 
 #ifndef MyConfig_PragmaRegion  // fake pragma region (supported in Visual Studio, but not gcc)
@@ -72,6 +75,7 @@
 #define FF18 &FreeSans12pt7b
 
 Clock myClock;
+struct tm timeinfo;
 
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
@@ -90,6 +94,88 @@ int lastIndex = 0;
 // IRAM_ATTR 
 void myISR() {
 	thisIndex++;
+}
+
+void printLocalTime()
+{
+    struct tm timeinfo;
+    if (!getLocalTime(&timeinfo)) {
+        Serial.println("Failed to obtain time");
+        return;
+    }
+    Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+}
+ 
+ int DST_Offset()
+{
+     int StandardTimeOffset = 3600;
+     int res = 0; // DST_value = 0
+     if (!getLocalTime(&timeinfo)) {
+         Serial.println("Failed to obtain time");
+         return 0;
+     }
+
+     int previousSunday = timeinfo.tm_mday - timeinfo.tm_wday;
+     Serial.print(" timeinfo.tm_mday = ");
+     Serial.println(timeinfo.tm_mday);
+     Serial.print(" timeinfo.tm_wday = ");
+     Serial.println(timeinfo.tm_wday);
+     switch (timeinfo.tm_mon)
+     {
+     case 1: // January
+     case 2: // February
+         res = StandardTimeOffset;
+     case 3: // March is when the time changes
+         if (previousSunday >= 8) {
+             res = 0; // DST
+         }
+         else {
+             res = StandardTimeOffset;
+         }
+     case 4:
+     case 5:
+     case 6:
+     case 7:
+     case 8:
+     case 9:
+     case 10:
+         res = 0;
+     case 11:
+         if (previousSunday <= 0) {
+             // DST
+         }
+         else {
+             res = StandardTimeOffset;
+         }
+     case 12:
+         res = StandardTimeOffset;
+     default:
+         break;
+     }
+     Serial.print(" res = ");
+     Serial.println(res);
+     return res;
+}
+
+void GetNetworkTime() {
+    Serial.printf("Connecting to %s ", ssid);
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+    if (WiFi.isConnected()) {
+        Serial.println(" CONNECTED");
+        //init and get the time
+        Serial.println(" Getting the time via configTime() ...");
+        configTime(gmtOffset_sec, DST_Offset(), ntpServer, ntpServer2, ntpServer3);
+        myClock.useNetworkTimeConfig = getLocalTime(&timeinfo); // if getLocalTime() is successfuly, we'll use network time
+ 
+        printLocalTime();
+    }
+    //disconnect WiFi as it's no longer needed
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_OFF);
 }
 
 
@@ -114,6 +200,7 @@ void setup() {
 	while (!Serial);
 	Serial.begin(19200); // Serial.begin after M5.begin 19200 or 57600 for debugging with Visual Micro; see http://www.visualmicro.com/forums/YaBB.pl?num=1365950696
 	delay(100);
+    GetNetworkTime(); 
 
 #ifdef ESP32_JS_WOW
 	Serial.println("ESP32_JS_WOW");
@@ -160,10 +247,8 @@ void setup() {
 	Serial.print("  RFM95_INT: "); Serial.println(RFM95_INT);
 	Serial.print("  RF95_FREQ: "); Serial.println(RF95_FREQ);
 
-
-	Serial.println("M5Stack LoRa RX/TX Test!");
-
-	// manual reset or LoRa module
+    Serial.println("Reminder that we didn't actually reset LoRa!");
+	// manual reset our LoRa module (note reset is on IO36 which is READ ONLY
 	//digitalWrite(RFM95_RST, LOW);
 	//delay(10);
 	//digitalWrite(RFM95_RST, HIGH);
@@ -185,7 +270,8 @@ void setup() {
 		Serial.println("RadioHead LoRa radio init failed!");
 		while (1); // TODO - we don't really want to wait here forever
 	}
-	delay(1000);
+    Serial.print("  rf95.lastRssi: "); Serial.println(rf95.lastRssi());
+    delay(1000);
 	Serial.print("Using SlaveSelectPin=");
 	Serial.println(rf95.getSlaveSelectPin());
 	Serial.println("RadioHead LoRa radio init OK!");
@@ -242,6 +328,7 @@ void setup() {
 	uint8_t data[20] = "Polling!";
 	Serial.println("Calling send...");
 
+    rf95.setModeIdle();
 	rf95.send(data, 20);
 	Serial.println("waiting to send...");
 	if (rf95.waitPacketSent(5000)) {
@@ -299,7 +386,8 @@ void operationMessage(String msg) {
 
 void SendACK() {
     const uint8_t data[] = "ACK";
-    rf95.setModeTx();
+    rf95.setModeIdle();
+    Serial.print("Size =");  Serial.println(sizeof(data));
     rf95.send(data, sizeof(data));
     if (rf95.waitPacketSent(1000)) {
         Serial.println("ACK Packet send complete!"); delay(10);
@@ -328,15 +416,21 @@ void buttonsProcess() {
     if (M5.BtnC.wasPressed()) {
         operationMessage((char*)"Button C");
         uint8_t data[] = "Click1";
-        rf95.setModeTx();
+        Serial.println("Set rf95.setModeTx");
+        rf95.setModeIdle();
+        Serial.println("sending data...");
+        Serial.print(sizeof(data));
+        Serial.println(" bytes.");
         rf95.send(data, sizeof(data));
-        if (rf95.waitPacketSent(1000)) {
+        Serial.println("waiting for send to complete...");
+        if (rf95.waitPacketSent(1000)) { // time to wait in ms
             Serial.println("Packet send complete!"); delay(10);
             Serial.print("Millis = "); Serial.println(millis());
             Serial.println(millis());
         }
         else
         {
+            Serial.println("Packet send gave up!");
             // gave up waiting for packet to complete
         }
         rf95.setModeIdle();
@@ -502,6 +596,8 @@ void loop() {
 		Serial.println("*********************************************");
 		Serial.println();
 		intLastEventCount = intThisEventCount;
+        // GetNetworkTime();
 	}
+    // printLocalTime();
 	yield();
 }
