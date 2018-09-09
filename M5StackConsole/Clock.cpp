@@ -23,21 +23,31 @@ void Clock::refreshDisplay() {
 	if (targetTime < millis()) {
 		// Set next update for 1 second later
 		targetTime = millis() + 1000;
-
-		// Adjust the time values by adding 1 second
-		ss++;              // Advance second
-		if (ss == 60) {    // Check for roll-over
-			ss = 0;          // Reset seconds to zero
-			omm = mm;        // Save last minute time for display update
-			mm++;            // Advance minute
-			if (mm > 59) {   // Check for roll-over
-				mm = 0;
-				hh++;          // Advance hour
-				if (hh > 23) { // Check for 24hr roll-over (could roll-over on 13)
-					hh = 0;      // 0 for 24 hour clock, set to 1 for 12 hour clock
-				}
-			}
-		}
+        struct tm timeinfo;
+        if (!useNetworkTimeConfig || !getLocalTime(&timeinfo)) { // getLocalTime() can take several seconds if not configured!
+            useNetworkTimeConfig = false;
+            Serial.println("Failed to obtain time");
+            // Adjust the time values by adding 1 second
+            ss++;              // Advance second
+            if (ss == 60) {    // Check for roll-over
+                ss = 0;          // Reset seconds to zero
+                omm = mm;        // Save last minute time for display update
+                mm++;            // Advance minute
+                if (mm > 59) {   // Check for roll-over
+                    mm = 0;
+                    hh++;          // Advance hour
+                    if (hh > 23) { // Check for 24hr roll-over (could roll-over on 13)
+                        hh = 0;      // 0 for 24 hour clock, set to 1 for 12 hour clock
+                    }
+                }
+            }
+        }
+        else {
+            // Serial.println("using timeinfo");
+            hh = timeinfo.tm_hour;
+            mm = timeinfo.tm_min;
+            ss = timeinfo.tm_sec;
+        }
 
 
 		// Update digital time

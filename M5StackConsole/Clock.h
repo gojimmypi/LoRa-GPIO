@@ -2,7 +2,8 @@
 class Clock
 {
 public:
-	Clock();
+    bool useNetworkTimeConfig = false;
+    Clock();
 	Clock(int HourValue, int MinuteValue, int SecondValue);
 	void refreshDisplay();
 	~Clock();
