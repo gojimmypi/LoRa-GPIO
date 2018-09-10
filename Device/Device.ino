@@ -205,7 +205,7 @@ void SendUpdate() {
         }
         unsigned long TransmitStartTime = millis();
         LORA_DEBUG_PRINTLN("Sending to rf95 message!");
-        rf95.setModeTx();
+        rf95.setModeIdle();
         memset(rx_buf, 0, 20); // clear our receive buffer when sending
 
         if (isGateOpened()) {
@@ -271,6 +271,17 @@ void SendUpdate() {
 }
 
 
+void resetLoRa() {
+    delay(100);
+
+    // manual reset of LoRa
+    digitalWrite(RFM95_RST, LOW);
+    delay(10);
+    digitalWrite(RFM95_RST, HIGH);
+    delay(10);
+}
+
+
 //*******************************************************************************************************************************************
 //*******************************************************************************************************************************************
 // SETUP - main application initialization
@@ -306,16 +317,13 @@ void setup()
     pinMode(RFM95_RST, OUTPUT);
 	digitalWrite(RFM95_RST, HIGH);
 
-	// manual reset of LoRa
-	digitalWrite(RFM95_RST, LOW);
-	delay(10);
-	digitalWrite(RFM95_RST, HIGH);
-	delay(10);
+    resetLoRa();
 
 	while (!rf95.init()) {
         LORA_DEBUG_PRINT("LoRa radio init failed");
         // TODO - what now? reboot?
-        while (1);
+        delay(10000);
+        resetLoRa();
 	}
 	//Serial.println("LoRa radio init OK!");
 
@@ -327,6 +335,7 @@ void setup()
 	}
 	delay(250);
 
+    // rf95.setModemConfig(RH_RF95::Bw78Cr48Sf4096);
     LORA_DEBUG_PRINT("Set Freq to: "); LORA_DEBUG_PRINTLN(RF95_FREQ);
 
 	// Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on

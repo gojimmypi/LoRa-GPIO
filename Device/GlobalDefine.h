@@ -23,7 +23,8 @@
 #include "/workspace-git/myPrivateSettings.h"
 #else
 #pragma message(Reminder "Settings needed !")
-
+static const char* WIFI_SSID = "mySSID";
+static const char* WIFI_PWD = "myPASSWORD";
 #endif
 //**************************************************************************************************************
 //**************************************************************************************************************
