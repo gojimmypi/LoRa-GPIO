@@ -283,7 +283,10 @@ void setup() {
 	}
 	Serial.print("Set Freq to: "); Serial.println(RF95_FREQ);
 
-	// do we need to match modulation settings? (or just frequency?)
+
+    //rf95.setModemConfig(RH_RF95::Bw78Cr48Sf4096);
+    
+    // do we need to match modulation settings? (or just frequency?)
 	//if (!rf95.setModemConfig(Bw125Cr48Sf4096)) { // Bw125Cr48Sf4096
 	//	Serial.println("RadioHead setModemConfig failed");
 	//	while (1);
@@ -295,7 +298,7 @@ void setup() {
 	// PA_OUTPUT_RFO_PIN = 0
 	// override the default CS, reset, and IRQ pins (optional)
 	////LoRa.setPins(LORA_CS_PIN, LORA_RST_PIN, LORA_IRQ_PIN); // set CS, reset, IRQ pin
-	////LoRa.setTxPower(17,1);
+    rf95.setTxPower(23,true);
 	Serial.println("LoRa Receiver");
 	M5.Lcd.println("LoRa Receiver");
 
@@ -317,7 +320,8 @@ void setup() {
 	Serial.println("LoRa init succeeded.");
 	M5.Lcd.println("LoRa init succeeded.");
 	sleep(2);
-	M5.Lcd.clearDisplay();
+
+    M5.Lcd.clearDisplay();
 	M5.Lcd.setCursor(0, 0);
 
 	//Serial.print("SS:  "); Serial.println(SS);
@@ -331,7 +335,7 @@ void setup() {
     rf95.setModeIdle();
 	rf95.send(data, 20);
 	Serial.println("waiting to send...");
-	if (rf95.waitPacketSent(5000)) {
+	if (rf95.waitPacketSent(10000)) {
 		Serial.println("Packet send complete!"); delay(10);
 	}
 	else
@@ -389,7 +393,7 @@ void SendACK() {
     rf95.setModeIdle();
     Serial.print("Size =");  Serial.println(sizeof(data));
     rf95.send(data, sizeof(data));
-    if (rf95.waitPacketSent(1000)) {
+    if (rf95.waitPacketSent(10000)) {
         Serial.println("ACK Packet send complete!"); delay(10);
         Serial.print("Millis = "); Serial.println(millis());
         Serial.println(millis());
@@ -398,7 +402,7 @@ void SendACK() {
     {
         // gave up waiting for packet to complete
     }
-    rf95.setModeIdle();
+    rf95.setModeRx();
 }
 
 void buttonsProcess() {
@@ -433,7 +437,7 @@ void buttonsProcess() {
             Serial.println("Packet send gave up!");
             // gave up waiting for packet to complete
         }
-        rf95.setModeIdle();
+        rf95.setModeRx();
     }
 }
 
@@ -448,7 +452,7 @@ bool isMessageReceived() {
 
 int notCount = 0;
 void checkPacketReceipt(int timeToWait) {
-	rf95.setModeIdle();
+	rf95.setModeRx();
 	delay(10);  // ms delay; Receiver Startup Time 250.0 kHz = 63us; 2.5kHz = 2.33 ms
                 // TS_RE or later after setting the device in Receive mode, any incoming packet will be detected and demodulated by the transceiver.
 	yield();
