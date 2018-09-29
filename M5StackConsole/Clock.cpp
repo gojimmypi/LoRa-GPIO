@@ -2,7 +2,7 @@
 #include "Clock.h"
 // based onn M5Stack TFT_Clock_Digital sample code
 // which was based on clock sketch by Gilchrist 6 / 2 / 2014 1.0
-
+#include "timeHelper.h"
 
 
 Clock::Clock(int HourValue, int MinuteValue, int SecondValue)
@@ -12,8 +12,14 @@ Clock::Clock(int HourValue, int MinuteValue, int SecondValue)
 Clock::Clock()
 {
 	Clock(12, 0, 0);
+    setupLocalTime();
+    useNetworkTimeConfig = true;
 }
 
+ void  Clock::init() {
+    setupLocalTime();
+    useNetworkTimeConfig = true;
+}
 
 void Clock::refreshDisplay() {
 	byte omm = 99, oss = 99;

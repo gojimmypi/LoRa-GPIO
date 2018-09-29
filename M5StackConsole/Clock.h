@@ -6,6 +6,7 @@ public:
     Clock();
 	Clock(int HourValue, int MinuteValue, int SecondValue);
 	void refreshDisplay();
+    void init();
 	~Clock();
 
 
