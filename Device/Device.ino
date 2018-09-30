@@ -1,6 +1,7 @@
 // Similar to 32u4 w/ra02 LoRA see https://learn.adafruit.com/adafruit-feather-32u4-radio-with-lora-radio-module/using-the-rfm-9x-radio
 // Gate COM8 (to left as viewed from front)
 
+#include "GateMessage.h"
 #include "GateOpened.h"
 #include "GateClosed.h"
 #include <SPI.h>
@@ -18,9 +19,8 @@
 #define REMOTE_BP1 6           // aka PD7  aka 27 aka T0, labeled on board as 6
 #define REMOTE_BP2 12          // aka PD6  aka 26 aka T1, labeled on board as 12
 
-
-const int RADIO_PACKET_SIZE = 20;
-char tx_buf[20]; // our transmit message buffer
+#define RADIO_PACKET_SIZE  20
+char tx_buf[RADIO_PACKET_SIZE]; // our transmit message buffer
 
 unsigned long timerRefresh = 0;   // the dynamic counter refresh; are we ready to display the countdown? (typically updated every second)
 unsigned long SendUpdate_Timeout; // the dynamic counter refresh for actually sending the update
@@ -89,7 +89,7 @@ int16_t packetnum = 0;  // packet counter, we increment per xmission
 
 // https://stackoverflow.com/questions/2290509/debug-vs-ndebug/2290616#2290616
 #ifdef NDEBUG 
-int b; // we need a better mechanism for detecting debud / release
+int b; // we need a better mechanism for detecting debug / release
 #endif
 
 
@@ -182,12 +182,29 @@ bool ReceivedMessage(const char * TheMessage) {
 // Press the button on [thisGPIO] pin for [BUTTON_PRESS_DURATION] milliseconds - BLOCKING
 //*******************************************************************************************************************************************
 void PressButton(uint8_t thisGPIO) {
-    digitalWrite(thisGPIO, HIGH);
+    digitalWrite(thisGPIO, HIGH); // setting this pin high will drive current to the base of transistor, 
+                                  // emulating the button being pressed (collector to ground)
     delay(BUTTON_PRESS_DURATION); // we're typically waiting 250 ms here 
     LORA_MESSAGE_DEBUG_PRINTLN("Clicked Button 1!");
-    digitalWrite(thisGPIO, LOW);
+    digitalWrite(thisGPIO, LOW);  // release the button by turning off the transistor 
 }
 
+const char prefix[] = "M5 ";
+//*******************************************************************************************************************************************
+// 
+//*******************************************************************************************************************************************
+void PrepMessageToSend(const char str[RADIO_PACKET_SIZE]) {
+    memset(tx_buf, 0, RADIO_PACKET_SIZE);
+    int tx_buf_free = RADIO_PACKET_SIZE - strlen(tx_buf);
+    int tx_buf_need = strlen(prefix) + strlen(str) + 1;
+    if (tx_buf_need <= tx_buf_free) {
+        strcat(tx_buf, prefix);
+        strcat(tx_buf, str);
+    }
+    else {
+        strcat(tx_buf, "tx_buf size");
+    }
+}
 
 //*******************************************************************************************************************************************
 // SendUpdate; here we transmit the current gate status to home console on a periodic basis (see ReadyTxRefresh)
@@ -208,30 +225,36 @@ void SendUpdate() {
         rf95.setModeIdle();
         memset(rx_buf, 0, 20); // clear our receive buffer when sending
 
+
+
         if (isGateOpened()) {
-            Serial.println("Open!");
-            strncpy(tx_buf, DEVICEID" Open" + '\0', RADIO_PACKET_SIZE);
+            if (isGateClosed()) {
+                // if the gate is both open and closed, we have a malfunction!
+                PrepMessageToSend(GATE_MESSAGE_IS_ERROR);
+            }
+            else {
+                // the gate is open, and known to not be closed; Valid Open State
+                PrepMessageToSend(GATE_MESSAGE_IS_OPEN);
+            }
         }
-        else {
-            Serial.println("Not Open!");
-            strncpy(tx_buf, DEVICEID" Not Open" + '\0', RADIO_PACKET_SIZE);
+        else { // the gate is not open
+            if (isGateClosed()) {
+                PrepMessageToSend(GATE_MESSAGE_IS_CLOSED);
+            }
+            else {
+                // the gate is not open, nor closed; either in motion or stuck?
+                PrepMessageToSend(GATE_MESSAGE_IS_MOVING);
+            }
         }
 
-        if (isGateClosed()) {
-            Serial.println("Closed!!");
-            //strncpy(tx_buf, DEVICEID" Open" + '\0', RADIO_PACKET_SIZE); TODO
-        }
-        else {
-            Serial.println("Not Closed!");
-            //strncpy(tx_buf, DEVICEID" Not Open" + '\0', RADIO_PACKET_SIZE); TODO
-        }
-
-        itoa(packetnum++, tx_buf + 13, 10);
+        // itoa(packetnum++, tx_buf + 13, 10); // put the packet number into the string
         LORA_DEBUG_PRINT("Sending "); LORA_DEBUG_PRINTLN(tx_buf);
         tx_buf[19] = 0;
 
         delay(10); // TODO - do we really need this delay?
-        rf95.send((uint8_t *)tx_buf, 20);
+        Serial.print("Len=");
+        Serial.println(strlen(tx_buf));
+        rf95.send((uint8_t *)tx_buf, strlen(tx_buf));
 
         LORA_DEBUG_PRINTLN("Waiting for packet to complete..."); delay(10);
         yield();
@@ -294,7 +317,7 @@ void setup()
  #ifdef _DEBUG
 	while (!Serial);
 	delay(100);
-	Serial.println("Gate TX Test!");
+	Serial.println("Gate Device Startup!");
 	blinkLED(10);
  #endif
     Serial.begin(9600);
@@ -375,14 +398,15 @@ void loop()
             //LORA_MESSAGE_DEBUG_PRINTLN("Clicked Button 1!");
             //digitalWrite(REMOTE_BP2, LOW);
         }
-        else if ((char*)rx_buf == (char*)"Click2") {
+        else if (ReceivedMessage("Click2")) {
             digitalWrite(REMOTE_BP2, HIGH);
             delay(BUTTON_PRESS_DURATION); // we're typically waiting 250 ms here BLOCKING
             LORA_MESSAGE_DEBUG_PRINTLN("Clicked Button 2!");
             digitalWrite(REMOTE_BP2, LOW);
         }
-        else if ((char*)rx_buf == (char*)"ACK") {
+        else if (ReceivedMessage("ACK")) {
             isWaitingOnAck = false;
+            LORA_MESSAGE_DEBUG_PRINTLN("isWaitingOnAck = false!");
         }
         else {
             LORA_MESSAGE_DEBUG_PRINT("Ignored message: ");

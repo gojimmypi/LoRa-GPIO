@@ -31,6 +31,9 @@
     <ClInclude Include="GateOpened.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GateMessage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GlobalDefine.cpp">
@@ -40,6 +43,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GateOpened.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GateMessage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
