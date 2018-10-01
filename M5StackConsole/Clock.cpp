@@ -27,8 +27,8 @@ void Clock::refreshDisplay() {
 	unsigned int colour = 0;
 
 	if (targetTime < millis()) {
-		// Set next update for 1 second later
-		targetTime = millis() + 1000;
+		// Set next update for <1 second later (leave some time for other ops)
+		targetTime = millis() + 900;
         struct tm timeinfo;
         if (!useNetworkTimeConfig || !getLocalTime(&timeinfo)) { // getLocalTime() can take several seconds if not configured!
             useNetworkTimeConfig = false;
