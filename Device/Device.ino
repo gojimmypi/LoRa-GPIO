@@ -15,18 +15,24 @@
 
 // see https ://github.com/gojimmypi/LoRa-GPIO/blob/master/doc/DIY0031-LoRa32u4%20pinout%20diagram.pdf
 // the values here are the bluish-gray "Arduino Pin" numbers, second column out from board
-#define LED 13 // Blinky on receipt
+#define LED 13 // Blink  
 #define REMOTE_BP1 6           // aka PD7  aka 27 aka T0, labeled on board as 6
 #define REMOTE_BP2 12          // aka PD6  aka 26 aka T1, labeled on board as 12
 
 #define RADIO_PACKET_SIZE  20
 char tx_buf[RADIO_PACKET_SIZE]; // our transmit message buffer
+// LoRa receive buffer
+char rx_buf[RH_RF95_MAX_MESSAGE_LEN];
+uint8_t rx_len = sizeof(rx_buf);
 
 unsigned long timerRefresh = 0;   // the dynamic counter refresh; are we ready to display the countdown? (typically updated every second)
 unsigned long SendUpdate_Timeout; // the dynamic counter refresh for actually sending the update
 unsigned long Rx_SendUpdate_ACK_Timeout; // the dynamic counter refresh for resending if no ACK received
 unsigned int SendUpdate_Repeat_Counter = 0;
 bool isWaitingOnAck = false;
+bool wasGateOpen = false;
+bool wasGateClosed = false;
+bool wasGatePaused = false;
 
 unsigned const long SEND_UPDATE_TIMEOUT_MILLISECONDS = 100000; // how many miliseconds between sendinng LoRa gate status? TODO, this should be more flexible: frequent during opening and closing.... infrequent when idle
 unsigned const long RX_SEND_UPDATE_ACK_TIMEOUT_MILLISECONDS = 2000; // we expected to receive an ACK to our update sent, if not, resend it with this frequency
@@ -80,9 +86,7 @@ unsigned const int SEND_UPDATE_REPEAT_MAX = 3; // howc many additional messages 
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
-// LoRa receive buffer
-uint8_t rx_buf[RH_RF95_MAX_MESSAGE_LEN];
-uint8_t rx_len = sizeof(rx_buf);
+
 
 int16_t packetnum = 0;  // packet counter, we increment per xmission
                         // Should be a message for us now   
@@ -97,9 +101,9 @@ int b; // we need a better mechanism for detecting debug / release
 // Hello World, blink the LED for [duration] milliseconds  BLOCKING
 //*******************************************************************************************************************************************
 void blinkLED(int duration) {
-	digitalWrite(RFM95_RST, HIGH);
+	digitalWrite(LED, HIGH);
 	delay(duration);
-	digitalWrite(RFM95_RST, LOW);
+	digitalWrite(LED, LOW);
 }
 
 
@@ -165,18 +169,18 @@ bool ReadyTxRefresh() {
 // note we should return fairly quickly here, regardless of results, as receiver is interrupt driven
 //*******************************************************************************************************************************************
 bool isMessageReceived() {
-    rf95.setModeRx(); // reminder if we are already in Rx mode, this does nothing
-    return rf95.recv(rx_buf, &rx_len);
+    // rf95.setModeRx(); // reminder if we are already in Rx mode, this does nothing
+    return rf95.recv((uint8_t *)rx_buf, &rx_len);
 }
 
 //*******************************************************************************************************************************************
 // ReceivedMessage - return true if the message most recently received is [TheMessage]
 //*******************************************************************************************************************************************
 bool ReceivedMessage(const char * TheMessage) {
-    // do a memory btye compare for the first [length of TheMessage] bytes, return true if equal
-    // TODO determine length of param and compare that!
-    return  (memcmp(rx_buf, (char*)TheMessage, sizeof((char*)"Click1")) == 0);
+    char * x = strstr(rx_buf, TheMessage); // Returns a pointer to the first occurrence of str2 in str1, or a null pointer if str2 is not part of str1.
+    return  (x != nullptr);
 }
+
 
 //*******************************************************************************************************************************************
 // Press the button on [thisGPIO] pin for [BUTTON_PRESS_DURATION] milliseconds - BLOCKING
@@ -184,26 +188,118 @@ bool ReceivedMessage(const char * TheMessage) {
 void PressButton(uint8_t thisGPIO) {
     digitalWrite(thisGPIO, HIGH); // setting this pin high will drive current to the base of transistor, 
                                   // emulating the button being pressed (collector to ground)
+    LORA_MESSAGE_DEBUG_PRINT("Clicking Button ");
     delay(BUTTON_PRESS_DURATION); // we're typically waiting 250 ms here 
-    LORA_MESSAGE_DEBUG_PRINTLN("Clicked Button 1!");
+    if (thisGPIO == REMOTE_BP1) {
+        LORA_MESSAGE_DEBUG_PRINTLN("1!");
+    }
+    else if (thisGPIO == REMOTE_BP2) {
+        LORA_MESSAGE_DEBUG_PRINTLN("2!");
+    }
+    else {
+        LORA_MESSAGE_DEBUG_PRINTLN("(unsupported)!");
+    }
     digitalWrite(thisGPIO, LOW);  // release the button by turning off the transistor 
 }
 
 const char prefix[] = "M5 ";
 //*******************************************************************************************************************************************
-// 
+//  PrepMessageToSend
 //*******************************************************************************************************************************************
 void PrepMessageToSend(const char str[RADIO_PACKET_SIZE]) {
-    memset(tx_buf, 0, RADIO_PACKET_SIZE);
-    int tx_buf_free = RADIO_PACKET_SIZE - strlen(tx_buf);
-    int tx_buf_need = strlen(prefix) + strlen(str) + 1;
+    memset(tx_buf, 0, RADIO_PACKET_SIZE);                 // clear the transmit buffer
+    int tx_buf_free = RADIO_PACKET_SIZE - strlen(tx_buf); // confirm we have free space
+    int tx_buf_need = strlen(prefix) + strlen(str) + 1;   // determine how much space is needed
     if (tx_buf_need <= tx_buf_free) {
-        strcat(tx_buf, prefix);
-        strcat(tx_buf, str);
+        strcat(tx_buf, prefix);                           // append the prefix to the transmit buffer
+        strcat(tx_buf, str);                              // then append the string we want to send after the prefix
     }
     else {
-        strcat(tx_buf, "tx_buf size");
+        strcat(tx_buf, "tx_buf size");                    // if there's not enough space, put in error message
     }
+}
+
+void SendStatus() {
+    unsigned long TransmitStartTime = millis();
+    LORA_DEBUG_PRINTLN("Sending to rf95 message!");
+    rf95.setModeIdle();
+    memset(rx_buf, 0, 20); // clear our receive buffer when sending
+
+
+
+    if (isGateOpened()) {
+        if (isGateClosed()) {
+            // if the gate is both open and closed, we have a malfunction!
+            PrepMessageToSend(GATE_MESSAGE_IS_ERROR);
+            wasGateClosed = true;
+        }
+        else {
+            // the gate is open, and known to not be closed; Valid Open State
+            PrepMessageToSend(GATE_MESSAGE_IS_OPEN);
+            wasGateClosed = false;
+        }
+        wasGateOpen = true;
+        wasGatePaused = false;
+    }
+    else { // the gate is not open
+        if (isGateClosed()) {
+            PrepMessageToSend(GATE_MESSAGE_IS_CLOSED);
+            wasGateClosed = true;
+            wasGatePaused = false;
+        }
+        else {
+            // the gate is not open, nor closed; either in motion or stuck?
+            if (wasGateClosed) {
+                PrepMessageToSend(GATE_MESSAGE_IS_OPENING);
+            }
+            else if (wasGateOpen) {
+                PrepMessageToSend(GATE_MESSAGE_IS_CLOSING);
+            }
+            else {
+                PrepMessageToSend(GATE_MESSAGE_IS_MOVING);
+            }
+            // we don't update wasGateClosed or wasGateOpen while moving
+        }
+    }
+
+    // itoa(packetnum++, tx_buf + 13, 10); // put the packet number into the string
+    LORA_DEBUG_PRINT("Sending "); LORA_DEBUG_PRINTLN(tx_buf);
+    tx_buf[RADIO_PACKET_SIZE - 1] = 0;
+
+    delay(10); // TODO - do we really need this delay?
+    Serial.print("Len=");
+    Serial.println(strlen(tx_buf));
+    rf95.send((uint8_t *)tx_buf, strlen(tx_buf));
+
+    LORA_DEBUG_PRINTLN("Waiting for packet to complete..."); delay(10);
+    yield();
+    if (rf95.waitPacketSent(1000)) {
+        Serial.print("isWaitingOnAck =");
+        Serial.println(isWaitingOnAck);
+        if (SendUpdate_Repeat_Counter < SEND_UPDATE_REPEAT_MAX) {
+            isWaitingOnAck = true;
+        }
+        else {
+            SendUpdate_Repeat_Counter = 0;
+            isWaitingOnAck = false;
+
+        }
+        LORA_DEBUG_PRINTLN("Packet send complete!");
+        LORA_DEBUG_PRINT("rf95.waitPacketSent = "); LORA_DEBUG_PRINT(millis() - TransmitStartTime); LORA_DEBUG_PRINTLN("ms. ");
+    }
+    else
+    {
+        // gave up waiting for packet to complete
+        LORA_DEBUG_PRINTLN("Packet FAILED to complete!"); delay(10);
+    }
+    memset(tx_buf, 0, 20); // clear our transmit buffer after transmit is complete
+    rf95.setModeIdle(); // ready to receive
+    if (!isWaitingOnAck) {
+        Serial.print("no waiting on ack, reset");
+        Reset_SendUpdate_Timeout(); // SendUpdate_Timeout = millis(); // reset our counter for how often we actually send messages
+    }
+    Serial.println();
+    Serial.println();
 }
 
 //*******************************************************************************************************************************************
@@ -220,71 +316,7 @@ void SendUpdate() {
         else {
             Serial.println("not a repeat");
         }
-        unsigned long TransmitStartTime = millis();
-        LORA_DEBUG_PRINTLN("Sending to rf95 message!");
-        rf95.setModeIdle();
-        memset(rx_buf, 0, 20); // clear our receive buffer when sending
-
-
-
-        if (isGateOpened()) {
-            if (isGateClosed()) {
-                // if the gate is both open and closed, we have a malfunction!
-                PrepMessageToSend(GATE_MESSAGE_IS_ERROR);
-            }
-            else {
-                // the gate is open, and known to not be closed; Valid Open State
-                PrepMessageToSend(GATE_MESSAGE_IS_OPEN);
-            }
-        }
-        else { // the gate is not open
-            if (isGateClosed()) {
-                PrepMessageToSend(GATE_MESSAGE_IS_CLOSED);
-            }
-            else {
-                // the gate is not open, nor closed; either in motion or stuck?
-                PrepMessageToSend(GATE_MESSAGE_IS_MOVING);
-            }
-        }
-
-        // itoa(packetnum++, tx_buf + 13, 10); // put the packet number into the string
-        LORA_DEBUG_PRINT("Sending "); LORA_DEBUG_PRINTLN(tx_buf);
-        tx_buf[19] = 0;
-
-        delay(10); // TODO - do we really need this delay?
-        Serial.print("Len=");
-        Serial.println(strlen(tx_buf));
-        rf95.send((uint8_t *)tx_buf, strlen(tx_buf));
-
-        LORA_DEBUG_PRINTLN("Waiting for packet to complete..."); delay(10);
-        yield();
-        if (rf95.waitPacketSent(1000)) {
-            Serial.print("isWaitingOnAck ="); 
-            Serial.println(isWaitingOnAck);
-            if (SendUpdate_Repeat_Counter < SEND_UPDATE_REPEAT_MAX) {
-                isWaitingOnAck = true;
-            }
-            else {
-                SendUpdate_Repeat_Counter = 0;
-                isWaitingOnAck = false;
-
-            }
-            LORA_DEBUG_PRINTLN("Packet send complete!");
-            LORA_DEBUG_PRINT("rf95.waitPacketSent = "); LORA_DEBUG_PRINT(millis() - TransmitStartTime); LORA_DEBUG_PRINTLN("ms. ");
-        }
-        else
-        {
-            // gave up waiting for packet to complete
-            LORA_DEBUG_PRINTLN("Packet FAILED to complete!"); delay(10);
-        }
-        memset(tx_buf,0, 20); // clear our transmit buffer after transmit is complete
-        rf95.setModeRx(); // ready to receive
-        if (!isWaitingOnAck) {
-            Serial.print("no waiting on ack, reset");
-            Reset_SendUpdate_Timeout(); // SendUpdate_Timeout = millis(); // reset our counter for how often we actually send messages
-        }
-        Serial.println();
-        Serial.println();
+        SendStatus();
     }
     else {
         yield(); // <puff, puff>
@@ -385,32 +417,32 @@ void loop()
     // continually see if we have a message
     if (isMessageReceived())
     {
+        blinkLED(200); // this also serves as delay to await all characters
         LORA_MESSAGE_DEBUG_PRINT("Got reply: ");
-        LORA_MESSAGE_DEBUG_PRINTLN((char*)rx_buf);
+        LORA_MESSAGE_DEBUG_PRINTLN(rx_buf);
         LORA_MESSAGE_DEBUG_PRINT("RSSI: ");
         LORA_MESSAGE_DEBUG_PRINTLN(rf95.lastRssi());
         if (ReceivedMessage("Click1")) {
-            PressButton(REMOTE_BP2); // BLOCKING
-
-        //if (memcmp(rx_buf, (char*)"Click1", sizeof((char*)"Click1")) == 0) {
-            //digitalWrite(REMOTE_BP2, HIGH);
-            //delay(BUTTON_PRESS_DURATION); // we're typically waiting 250 ms here BLOCKING
-            //LORA_MESSAGE_DEBUG_PRINTLN("Clicked Button 1!");
-            //digitalWrite(REMOTE_BP2, LOW);
+            if (!wasGateClosed && !wasGateOpen) {
+                wasGatePaused = true;
+            }
+            PressButton(REMOTE_BP1); // BLOCKING
         }
         else if (ReceivedMessage("Click2")) {
-            digitalWrite(REMOTE_BP2, HIGH);
-            delay(BUTTON_PRESS_DURATION); // we're typically waiting 250 ms here BLOCKING
-            LORA_MESSAGE_DEBUG_PRINTLN("Clicked Button 2!");
-            digitalWrite(REMOTE_BP2, LOW);
+            PressButton(REMOTE_BP2); // BLOCKING
         }
         else if (ReceivedMessage("ACK")) {
             isWaitingOnAck = false;
             LORA_MESSAGE_DEBUG_PRINTLN("isWaitingOnAck = false!");
         }
+        else if (ReceivedMessage("M5 Refresh")) {
+             // TODO refresh
+            SendStatus();
+            LORA_MESSAGE_DEBUG_PRINTLN("Sent status for Refresh!!");
+        }
         else {
             LORA_MESSAGE_DEBUG_PRINT("Ignored message: ");
-            LORA_MESSAGE_DEBUG_PRINTLN((char*)rx_buf);
+            LORA_MESSAGE_DEBUG_PRINTLN(rx_buf);
         }
     }
     else
