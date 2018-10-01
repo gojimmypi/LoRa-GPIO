@@ -33,7 +33,13 @@
     <ClInclude Include="__vm\.M5StackConsole.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="timeHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="GlobalDefine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WiFiHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -44,7 +50,13 @@
     <ClCompile Include="GateState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="timeHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="GlobalDefine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WiFiHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

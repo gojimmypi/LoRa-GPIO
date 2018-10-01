@@ -26,6 +26,8 @@
 #include "time.h"
 #include "Clock.h"
 
+#include "WiFiHelper.h"
+
 #ifndef MyConfig_PragmaRegion  // fake pragma region (supported in Visual Studio, but not gcc)
 
 // Change to 434.0 or other frequency, must match RX's freq! RadioHead in MHz (e.g. 433); M5 in Hz (e.g. 433E6)
@@ -74,8 +76,13 @@
 #define GFXFF 1
 #define FF18 &FreeSans12pt7b
 
+#define RADIO_PACKET_SIZE  20
+#define SEND_MESSAGE_IS_REFRESH    "Refresh"
 Clock myClock;
 struct tm timeinfo;
+
+char tx_buf[RADIO_PACKET_SIZE]; // our transmit message buffer
+
 
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
@@ -84,6 +91,7 @@ RH_RF95 rf95(RFM95_CS, RFM95_INT);
 Preferences preferences;
 
 GateState myGate;
+
 
 // TODO - determine if RAM attributes are really needed for IRQs on ESP32
 //static DRAM_ATTR   
@@ -96,111 +104,109 @@ void myISR() {
 	thisIndex++;
 }
 
-void printLocalTime()
-{
-    struct tm timeinfo;
-    if (!getLocalTime(&timeinfo)) {
-        Serial.println("Failed to obtain time");
-        return;
-    }
-    Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
-}
  
- int DST_Offset()
-{
-     int StandardTimeOffset = 3600;
-     int res = 0; // DST_value = 0
-     if (!getLocalTime(&timeinfo)) {
-         Serial.println("Failed to obtain time");
-         return 0;
-     }
+// int DST_Offset()
+//{
+//     int StandardTimeOffset = 3600;
+//     int res = 0; // DST_value = 0
+//     if (!getLocalTime(&timeinfo)) {
+//         Serial.println("Failed to obtain time");
+//         return 0;
+//     }
+//
+//     int previousSunday = timeinfo.tm_mday - timeinfo.tm_wday;
+//     Serial.print(" timeinfo.tm_mday = ");
+//     Serial.println(timeinfo.tm_mday);
+//     Serial.print(" timeinfo.tm_wday = ");
+//     Serial.println(timeinfo.tm_wday);
+//     switch (timeinfo.tm_mon)
+//     {
+//     case 1: // January
+//     case 2: // February
+//         res = StandardTimeOffset;
+//     case 3: // March is when the time changes
+//         if (previousSunday >= 8) {
+//             res = 0; // DST
+//         }
+//         else {
+//             res = StandardTimeOffset;
+//         }
+//     case 4:
+//     case 5:
+//     case 6:
+//     case 7:
+//     case 8:
+//     case 9:
+//     case 10:
+//         res = 0;
+//     case 11:
+//         if (previousSunday <= 0) {
+//             // DST
+//         }
+//         else {
+//             res = StandardTimeOffset;
+//         }
+//     case 12:
+//         res = StandardTimeOffset;
+//     default:
+//         break;
+//     }
+//     Serial.print(" res = ");
+//     Serial.println(res);
+//     return res;
+//}
 
-     int previousSunday = timeinfo.tm_mday - timeinfo.tm_wday;
-     Serial.print(" timeinfo.tm_mday = ");
-     Serial.println(timeinfo.tm_mday);
-     Serial.print(" timeinfo.tm_wday = ");
-     Serial.println(timeinfo.tm_wday);
-     switch (timeinfo.tm_mon)
-     {
-     case 1: // January
-     case 2: // February
-         res = StandardTimeOffset;
-     case 3: // March is when the time changes
-         if (previousSunday >= 8) {
-             res = 0; // DST
-         }
-         else {
-             res = StandardTimeOffset;
-         }
-     case 4:
-     case 5:
-     case 6:
-     case 7:
-     case 8:
-     case 9:
-     case 10:
-         res = 0;
-     case 11:
-         if (previousSunday <= 0) {
-             // DST
-         }
-         else {
-             res = StandardTimeOffset;
-         }
-     case 12:
-         res = StandardTimeOffset;
-     default:
-         break;
-     }
-     Serial.print(" res = ");
-     Serial.println(res);
-     return res;
+//void GetNetworkTime() {
+//    Serial.printf("Connecting to %s ", ssid);
+//    WiFi.begin(ssid, password);
+//    while (WiFi.status() != WL_CONNECTED) {
+//        delay(500);
+//        Serial.print(".");
+//    }
+//    if (WiFi.isConnected()) {
+//        Serial.println(" CONNECTED");
+//        //init and get the time
+//        Serial.println(" Getting the time via configTime() ...");
+//        configTime(gmtOffset_sec, DST_Offset(), ntpServer, ntpServer2, ntpServer3);
+//        myClock.useNetworkTimeConfig = getLocalTime(&timeinfo); // if getLocalTime() is successfuly, we'll use network time
+// 
+//        printLocalTime();
+//    }
+//    //disconnect WiFi as it's no longer needed
+//    WiFi.disconnect(true);
+//    WiFi.mode(WIFI_OFF);
+//}
+
+void initialSetup() {
+    // stuff that must be run first at power-up time
+    delay(100);
+    // see https://www.aliexpress.com/store/product/M5Stack-Official-Stock-Offer-LoRa-Module-for-ESP32-DIY-Development-Kit-Wireless-433MHz-Built-in-Antenna/3226069_32839736315.html
+    // To avoid the problem that the screen can not display, 
+    // GPIO5, as the NSS pin of the LoRa module, needs to be pulled up when the system is initialized.
+    // M5Stack LorRa init
+    pinMode(5, OUTPUT);
+    digitalWrite(5, HIGH);
+
+    M5.begin(false); // init the M5 library; note we customized this to not have LoRa conflict with speaker
+    preferences.end();
+
+    while (!Serial);
+    Serial.begin(19200); // Serial.begin after M5.begin 19200 or 57600 for debugging with Visual Micro; see http://www.visualmicro.com/forums/YaBB.pl?num=1365950696
 }
-
-void GetNetworkTime() {
-    Serial.printf("Connecting to %s ", ssid);
-    WiFi.begin(ssid, password);
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-    if (WiFi.isConnected()) {
-        Serial.println(" CONNECTED");
-        //init and get the time
-        Serial.println(" Getting the time via configTime() ...");
-        configTime(gmtOffset_sec, DST_Offset(), ntpServer, ntpServer2, ntpServer3);
-        myClock.useNetworkTimeConfig = getLocalTime(&timeinfo); // if getLocalTime() is successfuly, we'll use network time
- 
-        printLocalTime();
-    }
-    //disconnect WiFi as it's no longer needed
-    WiFi.disconnect(true);
-    WiFi.mode(WIFI_OFF);
-}
-
 
 void setup() {
-	delay(100);
-	// see https://www.aliexpress.com/store/product/M5Stack-Official-Stock-Offer-LoRa-Module-for-ESP32-DIY-Development-Kit-Wireless-433MHz-Built-in-Antenna/3226069_32839736315.html
-	// To avoid the problem that the screen can not display, 
-	// GPIO5, as the NSS pin of the LoRa module, needs to be pulled up when the system is initialized.
-	// M5Stack LorRa init
-	pinMode(5, OUTPUT);
-	digitalWrite(5, HIGH);
-	M5.begin(false);
-	preferences.end();
+    initialSetup();
 
-	WiFi.begin();
+    wifiConnect(20);
+    myClock.init(); // we delared a global variable that setup the network before WiFi was available, so we call init again here when WiFi is active to ensure time is set
+
 	WiFi.persistent(false); // Setting persistent to false will get SSID / password written to flash only if currently used values do not match what is already stored in flash.
 	                        // see http://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/generic-class.html#persistent
 
 	// WiFi.forceSleepBegin(); // what happened to this feature? no longer available?
-	WiFi.mode(WIFI_OFF); // if we're no using WiFi, turn it off
+	WiFi.mode(WIFI_OFF); // if we're not using WiFi, turn it off
 
-	while (!Serial);
-	Serial.begin(19200); // Serial.begin after M5.begin 19200 or 57600 for debugging with Visual Micro; see http://www.visualmicro.com/forums/YaBB.pl?num=1365950696
-	delay(100);
-    GetNetworkTime(); 
+    // GetNetworkTime(); 
 
 #ifdef ESP32_JS_WOW
 	Serial.println("ESP32_JS_WOW");
@@ -298,6 +304,11 @@ void setup() {
 	// PA_OUTPUT_RFO_PIN = 0
 	// override the default CS, reset, and IRQ pins (optional)
 	////LoRa.setPins(LORA_CS_PIN, LORA_RST_PIN, LORA_IRQ_PIN); // set CS, reset, IRQ pin
+
+    // The default transmitter power is 13dBm, using PA_BOOST.
+    // If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then 
+    // you can set transmitter powers from 5 to 23 dBm:
+    // rf95.setTxPower(13, false);
     rf95.setTxPower(23,true);
 	Serial.println("LoRa Receiver");
 	M5.Lcd.println("LoRa Receiver");
@@ -310,11 +321,7 @@ void setup() {
 	////	while (1);
 	////}
 
-	// The default transmitter power is 13dBm, using PA_BOOST.
-	// If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then 
-	// you can set transmitter powers from 5 to 23 dBm:
-	// rf95.setTxPower(13, false);
-	rf95.setTxPower(13, false);
+
 
 	// LoRa.setSyncWord(0x69);
 	Serial.println("LoRa init succeeded.");
@@ -355,20 +362,19 @@ void setup() {
 
 
 void operationMessage(String msg) {
+    // display is 320 x 240 
 	int xpos = 0;
 	int ypos = 85; // Top left corner of Operation text, about half way down = 85
 
 
-	String str = (String)msg + " RSSI = " + rf95.lastRssi();
+	String str = (String)msg + " RSSI = " + rf95.lastRssi() ;
 
 	M5.Lcd.setFreeFont(FF18);                 // Select the font
 	M5.Lcd.setTextColor(TFT_YELLOW, TFT_BLACK);    // Set colour yellow with black background
-
+    M5.Lcd.fillRect(0, 85, 319, 20, TFT_BLACK); // erase the enntire old line
 	M5.Lcd.drawString(str, xpos, ypos, GFXFF);// Print the string name of the font
 
 	Serial.println(str);
-
-
 }
 
 //void buttons_test() {
@@ -402,7 +408,45 @@ void SendACK() {
     {
         // gave up waiting for packet to complete
     }
-    rf95.setModeRx();
+    rf95.setModeIdle();
+}
+
+const char prefix[] = "M5 ";
+//*******************************************************************************************************************************************
+//  PrepMessageToSend
+//*******************************************************************************************************************************************
+void PrepMessageToSend(const char str[RADIO_PACKET_SIZE]) {
+    memset(tx_buf, 0, RADIO_PACKET_SIZE);                 // clear the transmit buffer
+    int tx_buf_free = RADIO_PACKET_SIZE - strlen(tx_buf); // confirm we have free space
+    int tx_buf_need = strlen(prefix) + strlen(str) + 1;   // determine how much space is needed
+    if (tx_buf_need <= tx_buf_free) {
+        strcat(tx_buf, prefix);                           // append the prefix to the transmit buffer
+        strcat(tx_buf, str);                              // then append the string we want to send after the prefix
+    }
+    else {
+        strcat(tx_buf, "tx_buf size");                    // if there's not enough space, put in error message
+    }
+}
+
+void SendMessage(const char data[RADIO_PACKET_SIZE]) {
+    Serial.print("Request to send message: ");
+    Serial.println(data);
+    rf95.setModeIdle();
+    PrepMessageToSend(data);
+    Serial.print("Size =");  Serial.println(strlen(tx_buf));
+    LORA_DEBUG_PRINT("Sending "); LORA_DEBUG_PRINTLN(tx_buf);
+    tx_buf[RADIO_PACKET_SIZE - 1] = 0;
+    rf95.send((uint8_t *)tx_buf, strlen(tx_buf));
+    if (rf95.waitPacketSent(10000)) {
+        Serial.println("Packet send complete!"); delay(10);
+        Serial.print("Millis = "); Serial.println(millis());
+        Serial.println(millis());
+    }
+    else
+    {
+        // gave up waiting for packet to complete
+    }
+    rf95.setModeIdle();
 }
 
 void buttonsProcess() {
@@ -414,8 +458,9 @@ void buttonsProcess() {
 
 	if (M5.BtnB.wasPressed()) {
 		M5.Lcd.clearDisplay();
-		operationMessage((char*)"Refresh");
-	}
+		operationMessage((char*)SEND_MESSAGE_IS_REFRESH);
+        SendMessage(SEND_MESSAGE_IS_REFRESH);
+    }
 
     if (M5.BtnC.wasPressed()) {
         operationMessage((char*)"Button C");
@@ -437,7 +482,7 @@ void buttonsProcess() {
             Serial.println("Packet send gave up!");
             // gave up waiting for packet to complete
         }
-        rf95.setModeRx();
+        rf95.setModeIdle();
     }
 }
 
@@ -447,12 +492,13 @@ void buttonsProcess() {
 uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
 uint8_t len = sizeof(buf);
 bool isMessageReceived() {
+    // This will return true if all (or part!) of a messages has been received; it will NOT know if message still in process of being received
 	return rf95.recv(buf, &len);
 }
 
 int notCount = 0;
 void checkPacketReceipt(int timeToWait) {
-	rf95.setModeRx();
+	rf95.setModeIdle();
 	delay(10);  // ms delay; Receiver Startup Time 250.0 kHz = 63us; 2.5kHz = 2.33 ms
                 // TS_RE or later after setting the device in Receive mode, any incoming packet will be detected and demodulated by the transceiver.
 	yield();
