@@ -60,7 +60,7 @@
 */
 
 // Change to 434.0 or other frequency, must match RX's freq!
-#define RF95_FREQ 433.375
+#define RF95_FREQ 433
 
 
 #define LED 13 // Blinky on receipt
@@ -127,6 +127,7 @@ void setup()
 	// If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then 
 	// you can set transmitter powers from 5 to 23 dBm:
 	rf95.setTxPower(23, false);
+    rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096);
 }
 
 int16_t packetnum = 0;  // packet counter, we increment per xmission
@@ -151,7 +152,7 @@ void loop()
 
 	Serial.println("Waiting for packet to complete..."); delay(10);
 
-	if (rf95.waitPacketSent(1000)) {
+	if (rf95.waitPacketSent(3000)) {
 		Serial.println("Packet send complete!"); delay(10);
 	}
 	else
@@ -183,6 +184,6 @@ void loop()
 	{
 		//Serial.println("No reply, is there a listener around?");
 	}
-	delay(1000);
+	delay(5000);
 }
 

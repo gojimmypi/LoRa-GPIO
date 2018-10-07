@@ -11,7 +11,7 @@
 
 #define BUTTON_PRESS_DURATION 250 // in milliseconds
 
-#define RF95_FREQ 433.0 // MHz frequenct. Reminder: must match RX's freq at Console\!
+#define RF95_FREQ 433.0 // MHz frequency. Reminder: must match RX's freq at Console!
 
 // see https ://github.com/gojimmypi/LoRa-GPIO/blob/master/doc/DIY0031-LoRa32u4%20pinout%20diagram.pdf
 // the values here are the bluish-gray "Arduino Pin" numbers, second column out from board
@@ -169,15 +169,20 @@ bool ReadyTxRefresh() {
 // note we should return fairly quickly here, regardless of results, as receiver is interrupt driven
 //*******************************************************************************************************************************************
 bool isMessageReceived() {
-    // rf95.setModeRx(); // reminder if we are already in Rx mode, this does nothing
-    return rf95.recv((uint8_t *)rx_buf, &rx_len);
+    return rf95.available();
+    //rf95.setModeRx(); // reminder if we are already in Rx mode, this does nothing
+    //if (strlen((char *) rx_buf) > 0) {
+    //    Serial.print("Message = ");
+    //    Serial.println((char *)rx_buf);
+    //}
+    //return rf95.recv(rx_buf, &rx_len);
 }
 
 //*******************************************************************************************************************************************
 // ReceivedMessage - return true if the message most recently received is [TheMessage]
 //*******************************************************************************************************************************************
 bool ReceivedMessage(const char * TheMessage) {
-    char * x = strstr(rx_buf, TheMessage); // Returns a pointer to the first occurrence of str2 in str1, or a null pointer if str2 is not part of str1.
+    char * x = strstr((char *)rx_buf, TheMessage); // Returns a pointer to the first occurrence of str2 in str1, or a null pointer if str2 is not part of str1.
     return  (x != nullptr);
 }
 
@@ -222,8 +227,8 @@ void PrepMessageToSend(const char str[RADIO_PACKET_SIZE]) {
 void SendStatus() {
     unsigned long TransmitStartTime = millis();
     LORA_DEBUG_PRINTLN("Sending to rf95 message!");
-    rf95.setModeIdle();
-    memset(rx_buf, 0, 20); // clear our receive buffer when sending
+    //rf95.setModeIdle();
+    memset((char *)rx_buf, 0, 20); // clear our receive buffer when sending
 
 
 
@@ -268,12 +273,12 @@ void SendStatus() {
 
     delay(10); // TODO - do we really need this delay?
     Serial.print("Len=");
-    Serial.println(strlen(tx_buf));
-    rf95.send((uint8_t *)tx_buf, strlen(tx_buf));
+    Serial.println(strlen((char *)tx_buf));
+    rf95.send((uint8_t *)tx_buf, strlen((char *)tx_buf));
 
     LORA_DEBUG_PRINTLN("Waiting for packet to complete..."); delay(10);
     yield();
-    if (rf95.waitPacketSent(1000)) {
+    if (rf95.waitPacketSent(3000)) { // todo param config
         Serial.print("isWaitingOnAck =");
         Serial.println(isWaitingOnAck);
         if (SendUpdate_Repeat_Counter < SEND_UPDATE_REPEAT_MAX) {
@@ -293,7 +298,7 @@ void SendStatus() {
         LORA_DEBUG_PRINTLN("Packet FAILED to complete!"); delay(10);
     }
     memset(tx_buf, 0, 20); // clear our transmit buffer after transmit is complete
-    rf95.setModeIdle(); // ready to receive
+    //rf95.setModeRx(); // ready to receive
     if (!isWaitingOnAck) {
         Serial.print("no waiting on ack, reset");
         Reset_SendUpdate_Timeout(); // SendUpdate_Timeout = millis(); // reset our counter for how often we actually send messages
@@ -346,13 +351,11 @@ void setup()
 {
 	delay(250);
 
- #ifdef _DEBUG
-	while (!Serial);
-	delay(100);
-	Serial.println("Gate Device Startup!");
-	blinkLED(10);
- #endif
     Serial.begin(9600);
+    // while (!Serial);
+    delay(100);
+    Serial.println("Gate Device Startup V0.001!");
+    blinkLED(10);
 
 
 	// LoRa32u4 GPIO init
@@ -390,7 +393,8 @@ void setup()
 	}
 	delay(250);
 
-    // rf95.setModemConfig(RH_RF95::Bw78Cr48Sf4096);
+    //rf95.setModemConfig(RH_RF95::Bw78Cr48Sf4096);
+    rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096);
     LORA_DEBUG_PRINT("Set Freq to: "); LORA_DEBUG_PRINTLN(RF95_FREQ);
 
 	// Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
@@ -415,20 +419,26 @@ void loop()
     SendUpdate();
 
     // continually see if we have a message
-    if (isMessageReceived())
+    if (rf95.available())
     {
         blinkLED(200); // this also serves as delay to await all characters
+        uint8_t len = sizeof(rx_buf);
+        rf95.recv((uint8_t *)rx_buf, &len);
+        RH_RF95::printBuffer("Received: ", (uint8_t *)rx_buf, len);
         LORA_MESSAGE_DEBUG_PRINT("Got reply: ");
         LORA_MESSAGE_DEBUG_PRINTLN(rx_buf);
         LORA_MESSAGE_DEBUG_PRINT("RSSI: ");
         LORA_MESSAGE_DEBUG_PRINTLN(rf95.lastRssi());
+
         if (ReceivedMessage("Click1")) {
+            rf95.send((uint8_t *)"ACK", 4);
             if (!wasGateClosed && !wasGateOpen) {
                 wasGatePaused = true;
             }
             PressButton(REMOTE_BP1); // BLOCKING
         }
         else if (ReceivedMessage("Click2")) {
+            rf95.send((uint8_t *)"ACK", 4);
             PressButton(REMOTE_BP2); // BLOCKING
         }
         else if (ReceivedMessage("ACK")) {
@@ -448,6 +458,7 @@ void loop()
     else
     {
         yield(); // <puff, puff />
+        delay(1);
     }
 }
 
