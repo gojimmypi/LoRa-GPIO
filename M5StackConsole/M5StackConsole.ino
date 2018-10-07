@@ -180,7 +180,8 @@ void myISR() {
 void initialSetup() {
     // stuff that must be run first at power-up time
     delay(100);
-    // see https://www.aliexpress.com/store/product/M5Stack-Official-Stock-Offer-LoRa-Module-for-ESP32-DIY-Development-Kit-Wireless-433MHz-Built-in-Antenna/3226069_32839736315.html
+                        
+                         // see https://www.aliexpress.com/store/product/M5Stack-Official-Stock-Offer-LoRa-Module-for-ESP32-DIY-Development-Kit-Wireless-433MHz-Built-in-Antenna/3226069_32839736315.html
     // To avoid the problem that the screen can not display, 
     // GPIO5, as the NSS pin of the LoRa module, needs to be pulled up when the system is initialized.
     // M5Stack LorRa init
@@ -188,10 +189,12 @@ void initialSetup() {
     digitalWrite(5, HIGH);
 
     M5.begin(false); // init the M5 library; note we customized this to not have LoRa conflict with speaker
+    M5.Lcd.setCursor(0, 0);
+    M5.Lcd.println("Startup...");
     preferences.end();
-
-    while (!Serial);
+    while (!Serial); //TODO 
     Serial.begin(19200); // Serial.begin after M5.begin 19200 or 57600 for debugging with Visual Micro; see http://www.visualmicro.com/forums/YaBB.pl?num=1365950696
+    Serial.println("Startup...");
 }
 
 void setup() {
@@ -276,7 +279,7 @@ void setup() {
 		Serial.println("RadioHead LoRa radio init failed!");
 		while (1); // TODO - we don't really want to wait here forever
 	}
-    Serial.print("  rf95.lastRssi: "); Serial.println(rf95.lastRssi());
+    //Serial.print("  rf95.lastRssi: "); Serial.println(rf95.lastRssi());
     delay(1000);
 	Serial.print("Using SlaveSelectPin=");
 	Serial.println(rf95.getSlaveSelectPin());
@@ -290,7 +293,7 @@ void setup() {
 	Serial.print("Set Freq to: "); Serial.println(RF95_FREQ);
 
 
-    //rf95.setModemConfig(RH_RF95::Bw78Cr48Sf4096);
+    rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096);
     
     // do we need to match modulation settings? (or just frequency?)
 	//if (!rf95.setModemConfig(Bw125Cr48Sf4096)) { // Bw125Cr48Sf4096
@@ -309,10 +312,10 @@ void setup() {
     // If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then 
     // you can set transmitter powers from 5 to 23 dBm:
     // rf95.setTxPower(13, false);
-    rf95.setTxPower(23,true);
+    rf95.setTxPower(23,false);
 	Serial.println("LoRa Receiver");
 	M5.Lcd.println("LoRa Receiver");
-
+    // rf95.send((uint8_t *)"hello", 5);
 	// frequency in Hz (433E6, 866E6, 915E6)
 	//// This is Sandeep Mistry library code
 	////if (!LoRa.begin(433.772280E6)) {
@@ -336,11 +339,13 @@ void setup() {
 	//Serial.print("MISO:"); Serial.println(MISO);
 	//Serial.print("SCK: "); Serial.println(SCK);
 	//Serial.print("A0:  "); Serial.println(A0);
-	uint8_t data[20] = "Polling!";
+    char data[20] = "Polling!";
+    data[8] = 0;
+    // memset((char*)data, 0, sizeof(data));
 	Serial.println("Calling send...");
 
-    rf95.setModeIdle();
-	rf95.send(data, 20);
+    //rf95.setModeIdle();
+	rf95.send((uint8_t *)data, 20);
 	Serial.println("waiting to send...");
 	if (rf95.waitPacketSent(10000)) {
 		Serial.println("Packet send complete!"); delay(10);
@@ -395,10 +400,11 @@ void operationMessage(String msg) {
 //}
 
 void SendACK() {
-    const uint8_t data[] = "ACK";
-    rf95.setModeIdle();
+    char data[4] = "ACK";
+    data[3] = 0;
+    //rf95.setModeIdle();
     Serial.print("Size =");  Serial.println(sizeof(data));
-    rf95.send(data, sizeof(data));
+    rf95.send((uint8_t *)data, sizeof(data));
     if (rf95.waitPacketSent(10000)) {
         Serial.println("ACK Packet send complete!"); delay(10);
         Serial.print("Millis = "); Serial.println(millis());
@@ -408,7 +414,7 @@ void SendACK() {
     {
         // gave up waiting for packet to complete
     }
-    rf95.setModeIdle();
+    //rf95.setModeIdle();
 }
 
 const char prefix[] = "M5 ";
@@ -416,7 +422,7 @@ const char prefix[] = "M5 ";
 //  PrepMessageToSend
 //*******************************************************************************************************************************************
 void PrepMessageToSend(const char str[RADIO_PACKET_SIZE]) {
-    memset(tx_buf, 0, RADIO_PACKET_SIZE);                 // clear the transmit buffer
+    memset(tx_buf, 0, RADIO_PACKET_SIZE);  //TODO ptr?               // clear the transmit buffer
     int tx_buf_free = RADIO_PACKET_SIZE - strlen(tx_buf); // confirm we have free space
     int tx_buf_need = strlen(prefix) + strlen(str) + 1;   // determine how much space is needed
     if (tx_buf_need <= tx_buf_free) {
@@ -428,15 +434,17 @@ void PrepMessageToSend(const char str[RADIO_PACKET_SIZE]) {
     }
 }
 
-void SendMessage(const char data[RADIO_PACKET_SIZE]) {
+void SendMessage(char data[RADIO_PACKET_SIZE]) {
     Serial.print("Request to send message: ");
     Serial.println(data);
-    rf95.setModeIdle();
+    //rf95.setModeIdle();
     PrepMessageToSend(data);
     Serial.print("Size =");  Serial.println(strlen(tx_buf));
     LORA_DEBUG_PRINT("Sending "); LORA_DEBUG_PRINTLN(tx_buf);
     tx_buf[RADIO_PACKET_SIZE - 1] = 0;
-    rf95.send((uint8_t *)tx_buf, strlen(tx_buf));
+ 
+    rf95.send((uint8_t *)tx_buf, sizeof(tx_buf));
+
     if (rf95.waitPacketSent(10000)) {
         Serial.println("Packet send complete!"); delay(10);
         Serial.print("Millis = "); Serial.println(millis());
@@ -446,7 +454,7 @@ void SendMessage(const char data[RADIO_PACKET_SIZE]) {
     {
         // gave up waiting for packet to complete
     }
-    rf95.setModeIdle();
+    //rf95.setModeIdle();
 }
 
 void buttonsProcess() {
@@ -464,15 +472,16 @@ void buttonsProcess() {
 
     if (M5.BtnC.wasPressed()) {
         operationMessage((char*)"Button C");
-        uint8_t data[] = "Click1";
-        Serial.println("Set rf95.setModeTx");
-        rf95.setModeIdle();
+        char data[20] = "Click1";
+        data[19] = 0;
+        //Serial.println("Set rf95.setModeTx");
+        //rf95.setModeIdle();
         Serial.println("sending data...");
         Serial.print(sizeof(data));
         Serial.println(" bytes.");
-        rf95.send(data, sizeof(data));
+        rf95.send((uint8_t *)data, sizeof(data));
         Serial.println("waiting for send to complete...");
-        if (rf95.waitPacketSent(1000)) { // time to wait in ms
+        if (rf95.waitPacketSent(3000)) { // time to wait in ms
             Serial.println("Packet send complete!"); delay(10);
             Serial.print("Millis = "); Serial.println(millis());
             Serial.println(millis());
@@ -482,7 +491,7 @@ void buttonsProcess() {
             Serial.println("Packet send gave up!");
             // gave up waiting for packet to complete
         }
-        rf95.setModeIdle();
+        //rf95.setModeIdle();
     }
 }
 
@@ -498,7 +507,7 @@ bool isMessageReceived() {
 
 int notCount = 0;
 void checkPacketReceipt(int timeToWait) {
-	rf95.setModeIdle();
+	//rf95.setModeRx();
 	delay(10);  // ms delay; Receiver Startup Time 250.0 kHz = 63us; 2.5kHz = 2.33 ms
                 // TS_RE or later after setting the device in Receive mode, any incoming packet will be detected and demodulated by the transceiver.
 	yield();
