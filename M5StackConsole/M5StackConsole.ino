@@ -77,7 +77,7 @@
 #define FF18 &FreeSans12pt7b
 
 #define RADIO_PACKET_SIZE  20
-#define SEND_MESSAGE_IS_REFRESH    "Refresh"
+#define SEND_MESSAGE_IS_REFRESH "Refresh"
 Clock myClock;
 struct tm timeinfo;
 
@@ -293,7 +293,7 @@ void setup() {
 	Serial.print("Set Freq to: "); Serial.println(RF95_FREQ);
 
 
-    rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096);
+    // rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096);
     
     // do we need to match modulation settings? (or just frequency?)
 	//if (!rf95.setModemConfig(Bw125Cr48Sf4096)) { // Bw125Cr48Sf4096
@@ -329,7 +329,7 @@ void setup() {
 	// LoRa.setSyncWord(0x69);
 	Serial.println("LoRa init succeeded.");
 	M5.Lcd.println("LoRa init succeeded.");
-	sleep(2);
+	//sleep(2);
 
     M5.Lcd.clearDisplay();
 	M5.Lcd.setCursor(0, 0);
@@ -344,7 +344,7 @@ void setup() {
     // memset((char*)data, 0, sizeof(data));
 	Serial.println("Calling send...");
 
-    //rf95.setModeIdle();
+    rf95.setModeIdle();
 	rf95.send((uint8_t *)data, 20);
 	Serial.println("waiting to send...");
 	if (rf95.waitPacketSent(10000)) {
@@ -402,19 +402,19 @@ void operationMessage(String msg) {
 void SendACK() {
     char data[4] = "ACK";
     data[3] = 0;
-    //rf95.setModeIdle();
+    rf95.setModeIdle();
     Serial.print("Size =");  Serial.println(sizeof(data));
     rf95.send((uint8_t *)data, sizeof(data));
-    if (rf95.waitPacketSent(10000)) {
-        Serial.println("ACK Packet send complete!"); delay(10);
-        Serial.print("Millis = "); Serial.println(millis());
-        Serial.println(millis());
-    }
-    else
-    {
-        // gave up waiting for packet to complete
-    }
-    //rf95.setModeIdle();
+    //if (rf95.waitPacketSent(10000)) {
+    //    Serial.println("ACK Packet send complete!"); delay(10);
+    //    Serial.print("Millis = "); Serial.println(millis());
+    //    Serial.println(millis());
+    //}
+    //else
+    //{
+    //    // gave up waiting for packet to complete
+    //}
+    rf95.setModeIdle();
 }
 
 const char prefix[] = "M5 ";
@@ -437,7 +437,7 @@ void PrepMessageToSend(const char str[RADIO_PACKET_SIZE]) {
 void SendMessage(char data[RADIO_PACKET_SIZE]) {
     Serial.print("Request to send message: ");
     Serial.println(data);
-    //rf95.setModeIdle();
+    rf95.setModeIdle();
     PrepMessageToSend(data);
     Serial.print("Size =");  Serial.println(strlen(tx_buf));
     LORA_DEBUG_PRINT("Sending "); LORA_DEBUG_PRINTLN(tx_buf);
@@ -445,16 +445,16 @@ void SendMessage(char data[RADIO_PACKET_SIZE]) {
  
     rf95.send((uint8_t *)tx_buf, sizeof(tx_buf));
 
-    if (rf95.waitPacketSent(10000)) {
-        Serial.println("Packet send complete!"); delay(10);
-        Serial.print("Millis = "); Serial.println(millis());
-        Serial.println(millis());
-    }
-    else
-    {
-        // gave up waiting for packet to complete
-    }
-    //rf95.setModeIdle();
+    //if (rf95.waitPacketSent(10000)) {
+    //    Serial.println("Packet send complete!"); delay(10);
+    //    Serial.print("Millis = "); Serial.println(millis());
+    //    Serial.println(millis());
+    //}
+    //else
+    //{
+    //    // gave up waiting for packet to complete
+    //}
+    rf95.setModeIdle();
 }
 
 void buttonsProcess() {
@@ -475,7 +475,7 @@ void buttonsProcess() {
         char data[20] = "Click1";
         data[19] = 0;
         //Serial.println("Set rf95.setModeTx");
-        //rf95.setModeIdle();
+        rf95.setModeIdle();
         Serial.println("sending data...");
         Serial.print(sizeof(data));
         Serial.println(" bytes.");
@@ -491,7 +491,7 @@ void buttonsProcess() {
             Serial.println("Packet send gave up!");
             // gave up waiting for packet to complete
         }
-        //rf95.setModeIdle();
+        rf95.setModeIdle();    
     }
 }
 
@@ -507,13 +507,13 @@ bool isMessageReceived() {
 
 int notCount = 0;
 void checkPacketReceipt(int timeToWait) {
-	//rf95.setModeRx();
+	rf95.setModeRx();
 	delay(10);  // ms delay; Receiver Startup Time 250.0 kHz = 63us; 2.5kHz = 2.33 ms
                 // TS_RE or later after setting the device in Receive mode, any incoming packet will be detected and demodulated by the transceiver.
 	yield();
 
 	// Serial.print("Waiting checkPacketReceipt...");
-	if (rf95.waitAvailableTimeout(timeToWait))
+    if (rf95.waitAvailableTimeout(timeToWait)) // if (rf95.available()) // return true if a new, complete, error-free uncollected message is available to be retreived by recv()
 	{
 		Serial.println("Available! ");
 		if (isMessageReceived())
@@ -595,7 +595,7 @@ void checkPacketReceipt(int timeToWait) {
 	////	M5.Lcd.print("\" with RSSI ");
 	////	//M5.Lcd.println(LoRa.packetRssi());
 	////}
-	rf95.sleep();
+	// rf95.sleep();
 	delay(10);
 }
 
@@ -611,11 +611,9 @@ void loop() {
 	//	lastIndex = thisIndex;
 	//}
 
-	//if (rf95.countInterrupt() != lastCountInterrupt) {
-	//	Serial.print(rf95.countInterrupt());
-	//	Serial.println("RH_95 Interrupt!");
-	//	lastCountInterrupt = rf95.countInterrupt();
-	//}
+    // this is a debug section that shows the count of interrupts.
+    // if interrupts are firing, but we are not receiving a message: why?
+
 	// buttons_test();
 
 	// Serial.println(digitalRead(TEST_GPIO));
@@ -630,19 +628,24 @@ void loop() {
 
 	M5.update();
 
-	intThisEventCount = rf95.txGood() + rf95.rxBad() + rf95.rxInvalid() + rf95.rxGood();
+	intThisEventCount = rf95.countInterrupt() + rf95.txGood() + rf95.rxBad() + rf95.rxInvalid();
 	if (intThisEventCount != intLastEventCount) {
+        Serial.print(":: interrupt: ");
+        Serial.println(rf95.countInterrupt(), DEC);
+ 
 		Serial.print(":: txGood: ");
-		Serial.println(rf95.txGood(), DEC);
+		Serial.println(rf95.txGood(), DEC); // transmit counter
 
-		Serial.print(":: rxBad: ");
+		Serial.print(":: rxBad: ");         // receive counter
 		Serial.println(rf95.rxBad(), DEC);
-		Serial.print(":: rxInvalid: ");
+
+		Serial.print(":: rxInvalid: ");     // receive counter
 		Serial.println(rf95.rxInvalid(), DEC);
 
-		Serial.print(":: rxGood: ");
-		Serial.println(rf95.rxGood(), DEC);
-		//Serial.print("0x");
+        Serial.print(":: rxGood: ");        // receive counter
+        Serial.println(rf95.rxGood(), DEC);
+        
+        //Serial.print("0x");
 		//Serial.print(rf95.readRegister((uint8_t)0x1d), HEX);
 		//Serial.print(", 0x");
 		//Serial.print(rf95.readRegister((uint8_t)0x1e), HEX);
