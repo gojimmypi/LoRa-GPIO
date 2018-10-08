@@ -393,8 +393,8 @@ void setup()
 	}
 	delay(250);
 
-    //rf95.setModemConfig(RH_RF95::Bw78Cr48Sf4096);
-    rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096);
+    // rf95.setModemConfig(RH_RF95::Bw78Cr48Sf4096);
+    // rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096);
     LORA_DEBUG_PRINT("Set Freq to: "); LORA_DEBUG_PRINTLN(RF95_FREQ);
 
 	// Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
