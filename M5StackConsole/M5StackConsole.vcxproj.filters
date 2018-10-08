@@ -71,4 +71,7 @@
     <Xml Include="__vm\Configuration.Release.vmps.xml" />
     <Xml Include="__vm\Upload.vmps.xml" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="code-compare.txt" />
+  </ItemGroup>
 </Project>

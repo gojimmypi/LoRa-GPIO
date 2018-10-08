@@ -507,7 +507,7 @@ bool isMessageReceived() {
 
 int notCount = 0;
 void checkPacketReceipt(int timeToWait) {
-	rf95.setModeRx();
+    rf95.setModeIdle();
 	delay(10);  // ms delay; Receiver Startup Time 250.0 kHz = 63us; 2.5kHz = 2.33 ms
                 // TS_RE or later after setting the device in Receive mode, any incoming packet will be detected and demodulated by the transceiver.
 	yield();
