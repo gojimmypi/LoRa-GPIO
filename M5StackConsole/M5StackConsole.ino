@@ -103,79 +103,29 @@ int lastIndex = 0;
 void myISR() {
 	thisIndex++;
 }
+//int _interruptPin = TEST_GPIO;
+//int interruptNumber = digitalPinToInterrupt(_interruptPin);
+//pinMode(_interruptPin, INPUT);
+
+//int errInt = gpio_intr_enable((gpio_num_t)interruptNumber);
+//Serial.print("interruptNumber gpio_intr_enable=");
+//Serial.println(errInt);
+
+//attachInterrupt(interruptNumber, myISR, RISING);
+
+// pinMode(35, INPUT);
+
+//attachInterrupt(35, myISR, RISING);
+
+
+// TODO is this the preferred way to attach interrupts?
+//gpio_install_isr_service(0);
+//gpio_isr_handler_add((gpio_num_t)TEST_GPIO, myISR, NULL);
+
+
+// SS = 5; // RadioHead_h overwrites this TODO edit source def
 
  
-// int DST_Offset()
-//{
-//     int StandardTimeOffset = 3600;
-//     int res = 0; // DST_value = 0
-//     if (!getLocalTime(&timeinfo)) {
-//         Serial.println("Failed to obtain time");
-//         return 0;
-//     }
-//
-//     int previousSunday = timeinfo.tm_mday - timeinfo.tm_wday;
-//     Serial.print(" timeinfo.tm_mday = ");
-//     Serial.println(timeinfo.tm_mday);
-//     Serial.print(" timeinfo.tm_wday = ");
-//     Serial.println(timeinfo.tm_wday);
-//     switch (timeinfo.tm_mon)
-//     {
-//     case 1: // January
-//     case 2: // February
-//         res = StandardTimeOffset;
-//     case 3: // March is when the time changes
-//         if (previousSunday >= 8) {
-//             res = 0; // DST
-//         }
-//         else {
-//             res = StandardTimeOffset;
-//         }
-//     case 4:
-//     case 5:
-//     case 6:
-//     case 7:
-//     case 8:
-//     case 9:
-//     case 10:
-//         res = 0;
-//     case 11:
-//         if (previousSunday <= 0) {
-//             // DST
-//         }
-//         else {
-//             res = StandardTimeOffset;
-//         }
-//     case 12:
-//         res = StandardTimeOffset;
-//     default:
-//         break;
-//     }
-//     Serial.print(" res = ");
-//     Serial.println(res);
-//     return res;
-//}
-
-//void GetNetworkTime() {
-//    Serial.printf("Connecting to %s ", ssid);
-//    WiFi.begin(ssid, password);
-//    while (WiFi.status() != WL_CONNECTED) {
-//        delay(500);
-//        Serial.print(".");
-//    }
-//    if (WiFi.isConnected()) {
-//        Serial.println(" CONNECTED");
-//        //init and get the time
-//        Serial.println(" Getting the time via configTime() ...");
-//        configTime(gmtOffset_sec, DST_Offset(), ntpServer, ntpServer2, ntpServer3);
-//        myClock.useNetworkTimeConfig = getLocalTime(&timeinfo); // if getLocalTime() is successfuly, we'll use network time
-// 
-//        printLocalTime();
-//    }
-//    //disconnect WiFi as it's no longer needed
-//    WiFi.disconnect(true);
-//    WiFi.mode(WIFI_OFF);
-//}
 
 void initialSetup() {
     // stuff that must be run first at power-up time
@@ -197,6 +147,105 @@ void initialSetup() {
     Serial.println("Startup...");
 }
 
+
+void initLoRa() {
+
+
+    // setup LoRa reset line
+    //pinMode(RFM95_RST, OUTPUT);
+    //digitalWrite(RFM95_RST, HIGH);
+
+
+    Serial.println("Startup! Version 1.01");
+
+    Serial.println("Pins at setup start:");
+    Serial.print("  SS:        "); Serial.println(SS);
+    Serial.print("  MOSI:      "); Serial.println(MOSI);
+    Serial.print("  MISO:      "); Serial.println(MISO);
+    Serial.print("  SCK:       "); Serial.println(SCK);
+    Serial.print("  A0:        "); Serial.println(A0); // typically 36
+    Serial.print("  RFM95_CS:  "); Serial.println(RFM95_CS);
+    Serial.print("  RFM95_RST: "); Serial.println(RFM95_RST);
+    Serial.print("  RFM95_INT: "); Serial.println(RFM95_INT);
+    Serial.print("  RF95_FREQ: "); Serial.println(RF95_FREQ);
+
+    Serial.println("Reminder that we didn't actually reset LoRa!");
+    // manual reset our LoRa module (note reset is on IO36 which is READ ONLY
+    //digitalWrite(RFM95_RST, LOW);
+    //delay(10);
+    //digitalWrite(RFM95_RST, HIGH);
+    //delay(10);
+
+    // manual reverse reset; desperation attempt in case reversed logic (does not appear that way) TODO confirm with oscilloscope
+    //digitalWrite(RFM95_RST, HIGH);
+    //delay(10);
+    //digitalWrite(RFM95_RST, LOW);
+    //delay(10);
+
+
+    //errInt = gpio_intr_enable((gpio_num_t) RFM95_INT);
+    //Serial.print("RFM95_INT gpio_intr_enable=");
+    //Serial.println(errInt);
+
+    // RadioHead initialization; sets freq to 434, power =13, config=Bw125Cr45Sf128, preamble=8, perhaps more
+    while (!rf95.init()) {
+        Serial.println("RadioHead LoRa radio init failed!");
+        while (1); // TODO - we don't really want to wait here forever
+    }
+    //Serial.print("  rf95.lastRssi: "); Serial.println(rf95.lastRssi());
+    delay(1000);
+    Serial.print("Using SlaveSelectPin=");
+    Serial.println(rf95.getSlaveSelectPin());
+    Serial.println("RadioHead LoRa radio init OK!");
+
+    // Defaults after init are 434.0MHz, modulation GFSK_Rb250Fd250, +13dbM
+    if (!rf95.setFrequency(RF95_FREQ)) {
+        Serial.println("RadioHead setFrequency failed");
+        while (1); // TODO - we don't really want to wait here forever
+    }
+    Serial.print("Set Freq to: "); Serial.println(RF95_FREQ);
+
+
+    // rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096);
+
+    // do we need to match modulation settings? (or just frequency?)
+    //if (!rf95.setModemConfig(Bw125Cr48Sf4096)) { // Bw125Cr48Sf4096
+    //	Serial.println("RadioHead setModemConfig failed");
+    //	while (1);
+    //}
+    // End Radio head
+    // rf95.setModeRx(); // do we need to set Rx mode? Sample code does not: https://learn.adafruit.com/adafruit-feather-32u4-radio-with-lora-radio-module/using-the-rfm-9x-radio
+
+
+    // PA_OUTPUT_RFO_PIN = 0
+    // override the default CS, reset, and IRQ pins (optional)
+    ////LoRa.setPins(LORA_CS_PIN, LORA_RST_PIN, LORA_IRQ_PIN); // set CS, reset, IRQ pin
+
+    // The default transmitter power is 13dBm, using PA_BOOST.
+    // If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then 
+    // you can set transmitter powers from 5 to 23 dBm:
+    // rf95.setTxPower(13, false);
+    rf95.setTxPower(23, false);
+    Serial.println("LoRa Receiver");
+    M5.Lcd.println("LoRa Receiver");
+    // rf95.send((uint8_t *)"hello", 5);
+    // frequency in Hz (433E6, 866E6, 915E6)
+    //// This is Sandeep Mistry library code
+    ////if (!LoRa.begin(433.772280E6)) {
+    ////	Serial.println("Starting LoRa failed!");
+    ////	M5.Lcd.println("Starting LoRa failed!");
+    ////	while (1);
+    ////}
+
+
+
+    // LoRa.setSyncWord(0x69);
+    Serial.println("LoRa init succeeded.");
+    M5.Lcd.println("LoRa init succeeded.");
+    //sleep(2);
+
+}
+
 void setup() {
     initialSetup();
 
@@ -215,121 +264,7 @@ void setup() {
 	Serial.println("ESP32_JS_WOW");
 #endif
 
-	//int _interruptPin = TEST_GPIO;
-	//int interruptNumber = digitalPinToInterrupt(_interruptPin);
-	//pinMode(_interruptPin, INPUT);
-
-	//int errInt = gpio_intr_enable((gpio_num_t)interruptNumber);
-	//Serial.print("interruptNumber gpio_intr_enable=");
-	//Serial.println(errInt);
-
-	//attachInterrupt(interruptNumber, myISR, RISING);
-
-	// pinMode(35, INPUT);
-
-	//attachInterrupt(35, myISR, RISING);
-
-
-	// TODO is this the preferred way to attach interrupts?
-	//gpio_install_isr_service(0);
-	//gpio_isr_handler_add((gpio_num_t)TEST_GPIO, myISR, NULL);
-
-
-	// SS = 5; // RadioHead_h overwrites this TODO edit source def
-
-
-	// setup LoRa reset line
-	//pinMode(RFM95_RST, OUTPUT);
-	//digitalWrite(RFM95_RST, HIGH);
-
-
-	Serial.println("Startup! Version 1.01");
-
-	Serial.println("Pins at setup start:");
-	Serial.print("  SS:        "); Serial.println(SS);
-	Serial.print("  MOSI:      "); Serial.println(MOSI);
-	Serial.print("  MISO:      "); Serial.println(MISO);
-	Serial.print("  SCK:       "); Serial.println(SCK);
-	Serial.print("  A0:        "); Serial.println(A0); // typically 36
-	Serial.print("  RFM95_CS:  "); Serial.println(RFM95_CS);
-	Serial.print("  RFM95_RST: "); Serial.println(RFM95_RST);
-	Serial.print("  RFM95_INT: "); Serial.println(RFM95_INT);
-	Serial.print("  RF95_FREQ: "); Serial.println(RF95_FREQ);
-
-    Serial.println("Reminder that we didn't actually reset LoRa!");
-	// manual reset our LoRa module (note reset is on IO36 which is READ ONLY
-	//digitalWrite(RFM95_RST, LOW);
-	//delay(10);
-	//digitalWrite(RFM95_RST, HIGH);
-	//delay(10);
-
-	// manual reverse reset; desperation attempt in case reversed logic (does not appear that way) TODO confirm with oscilloscope
-	//digitalWrite(RFM95_RST, HIGH);
-	//delay(10);
-	//digitalWrite(RFM95_RST, LOW);
-	//delay(10);
-
-
-	//errInt = gpio_intr_enable((gpio_num_t) RFM95_INT);
-	//Serial.print("RFM95_INT gpio_intr_enable=");
-	//Serial.println(errInt);
-
-	// RadioHead
-	while (!rf95.init()) {
-		Serial.println("RadioHead LoRa radio init failed!");
-		while (1); // TODO - we don't really want to wait here forever
-	}
-    //Serial.print("  rf95.lastRssi: "); Serial.println(rf95.lastRssi());
-    delay(1000);
-	Serial.print("Using SlaveSelectPin=");
-	Serial.println(rf95.getSlaveSelectPin());
-	Serial.println("RadioHead LoRa radio init OK!");
-
-	// Defaults after init are 434.0MHz, modulation GFSK_Rb250Fd250, +13dbM
-	if (!rf95.setFrequency(RF95_FREQ)) {
-		Serial.println("RadioHead setFrequency failed");
-		while (1); // TODO - we don't really want to wait here forever
-	}
-	Serial.print("Set Freq to: "); Serial.println(RF95_FREQ);
-
-
-    // rf95.setModemConfig(RH_RF95::Bw125Cr48Sf4096);
-    
-    // do we need to match modulation settings? (or just frequency?)
-	//if (!rf95.setModemConfig(Bw125Cr48Sf4096)) { // Bw125Cr48Sf4096
-	//	Serial.println("RadioHead setModemConfig failed");
-	//	while (1);
-	//}
-	// End Radio head
-	// rf95.setModeRx(); // do we need to set Rx mode? Sample code does not: https://learn.adafruit.com/adafruit-feather-32u4-radio-with-lora-radio-module/using-the-rfm-9x-radio
-
-
-	// PA_OUTPUT_RFO_PIN = 0
-	// override the default CS, reset, and IRQ pins (optional)
-	////LoRa.setPins(LORA_CS_PIN, LORA_RST_PIN, LORA_IRQ_PIN); // set CS, reset, IRQ pin
-
-    // The default transmitter power is 13dBm, using PA_BOOST.
-    // If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then 
-    // you can set transmitter powers from 5 to 23 dBm:
-    // rf95.setTxPower(13, false);
-    rf95.setTxPower(23,false);
-	Serial.println("LoRa Receiver");
-	M5.Lcd.println("LoRa Receiver");
-    // rf95.send((uint8_t *)"hello", 5);
-	// frequency in Hz (433E6, 866E6, 915E6)
-	//// This is Sandeep Mistry library code
-	////if (!LoRa.begin(433.772280E6)) {
-	////	Serial.println("Starting LoRa failed!");
-	////	M5.Lcd.println("Starting LoRa failed!");
-	////	while (1);
-	////}
-
-
-
-	// LoRa.setSyncWord(0x69);
-	Serial.println("LoRa init succeeded.");
-	M5.Lcd.println("LoRa init succeeded.");
-	//sleep(2);
+    initLoRa();
 
     M5.Lcd.clearDisplay();
 	M5.Lcd.setCursor(0, 0);
@@ -662,4 +597,5 @@ void loop() {
 	}
     // printLocalTime();
 	yield();
+    delay(20); // this is a hack: does it help with reprogramming problems?
 }
