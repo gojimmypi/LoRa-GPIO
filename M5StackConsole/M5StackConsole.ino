@@ -401,12 +401,12 @@ void buttonsProcess() {
 
 	if (M5.BtnB.wasPressed()) {
 		M5.Lcd.clearDisplay();
-		operationMessage((char*)SEND_MESSAGE_IS_REFRESH);
+		operationMessage((String)SEND_MESSAGE_IS_REFRESH);
         SendMessage(SEND_MESSAGE_IS_REFRESH);
     }
 
     if (M5.BtnC.wasPressed()) {
-        operationMessage((char*)"Button C");
+        operationMessage((String)"Button C");
         char data[20] = "Click1";
         data[19] = 0;
         //Serial.println("Set rf95.setModeTx");
@@ -479,7 +479,7 @@ void checkPacketReceipt(int timeToWait) {
 				}
 
 			}
-			operationMessage((char*)buf);
+			operationMessage(str);
 			// Send a reply
 			//delay(200); // TODO may or may not be needed
 			//uint8_t data[] = "And hello back to you";
@@ -539,7 +539,29 @@ int lastCountInterrupt = 0;
 int intThisEventCount = 0;
 int intLastEventCount = 0;
 
+int BeaconTime = millis();
+
+void SendBeacon() {
+    char data[20] = "Beacon!";
+    data[8] = 0;    
+    rf95.setModeIdle();
+    rf95.send((uint8_t *)data, 20);
+    Serial.println("waiting to send...");
+    if (rf95.waitPacketSent(10000)) {
+        Serial.println("Packet send complete!"); delay(10);
+    }
+    else
+    {
+        // gave up waiting for packet to complete
+        Serial.println("Packet FAILED to complete!"); delay(10);
+    }
+}
+
 void loop() {
+    if (BeaconTime < millis()) {
+        BeaconTime = millis() + 10000;
+        SendBeacon();
+    }
 	//if (thisIndex != lastIndex) {
 	//	Serial.print(thisIndex);
 	//	Serial.println(" Interrupt!");
