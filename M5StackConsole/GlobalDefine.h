@@ -24,7 +24,7 @@
 static const char* ntpServer = "time.nist.gov";
 static const char* ntpServer2 = "pool.ntp.org";
 static const char* ntpServer3 = "time.windows.com";
-static const long  gmtOffset_sec = -28800; //  San Francisco (GMT-8) = -25200; Paris (GMT+1) = 3600
+static const long  gmtOffset_sec = 3600; //  -28800; //  San Francisco (GMT-8) = -25200; Paris (GMT+1) = 3600
 static const int   daylightOffset_sec = 0;
 
 #else
