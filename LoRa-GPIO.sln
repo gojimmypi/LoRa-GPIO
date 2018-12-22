@@ -19,6 +19,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.txt = README.txt
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BeaconCheck", "BeaconCheck\BeaconCheck.vcxproj", "{963259FD-840D-4A9E-98E9-A24981B8B304}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -45,6 +47,10 @@ Global
 		{6CE43030-4523-49B0-82CA-DDE6CB64B51E}.Debug|x86.Build.0 = Debug|Win32
 		{6CE43030-4523-49B0-82CA-DDE6CB64B51E}.Release|x86.ActiveCfg = Release|Win32
 		{6CE43030-4523-49B0-82CA-DDE6CB64B51E}.Release|x86.Build.0 = Release|Win32
+		{963259FD-840D-4A9E-98E9-A24981B8B304}.Debug|x86.ActiveCfg = Debug|Win32
+		{963259FD-840D-4A9E-98E9-A24981B8B304}.Debug|x86.Build.0 = Debug|Win32
+		{963259FD-840D-4A9E-98E9-A24981B8B304}.Release|x86.ActiveCfg = Release|Win32
+		{963259FD-840D-4A9E-98E9-A24981B8B304}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
