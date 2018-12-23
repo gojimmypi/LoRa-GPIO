@@ -101,7 +101,7 @@ void setupLocalTime()
 
     // it is unlikely that the time is already set since we have no battery; 
     // if no time is available, then try to set time from the network
-    // TODO - investigate if somehow the time settings are saved in non-volatile memory
+    // TODO - investigate if somehow the time settings are saved in non-volatile memory (could be problematic for timezone changes)
     if (now <= 1500000000) {
         // try to set network time via ntp packets
         configTime(0, 0, "pool.ntp.org", "time.nist.gov"); // see https://github.com/esp8266/Arduino/issues/4749#issuecomment-390822737
