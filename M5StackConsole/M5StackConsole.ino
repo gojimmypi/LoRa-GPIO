@@ -558,10 +558,12 @@ void SendBeacon() {
 }
 
 void loop() {
-    if (BeaconTime < millis()) {
-        BeaconTime = millis() + 10000;
-        SendBeacon();
-    }
+
+    //if (BeaconTime < millis()) {
+    //    BeaconTime = millis() + 10000;
+    //    SendBeacon();
+    //}
+
 	//if (thisIndex != lastIndex) {
 	//	Serial.print(thisIndex);
 	//	Serial.println(" Interrupt!");
